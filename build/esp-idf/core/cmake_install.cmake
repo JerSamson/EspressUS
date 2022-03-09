@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/Jeremy/Documents/GithubProjects/sample_project/core
+# Install script for directory: C:/Users/Jeremy/Documents/GithubProjects/EspressUS/core
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

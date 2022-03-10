@@ -2,6 +2,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "gpio.h"
 
 #define pdSECOND pdMS_TO_TICKS(1000)
 
@@ -12,6 +13,8 @@ private:
 public:
     esp_err_t setup(void);
     void run(void);
+
+    Gpio::GpioOutput led{GPIO_NUM_5};
 
     Main(/* args */);
     ~Main();

@@ -663,6 +663,13 @@ C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/wifi_provisioni
 C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/wifi_provisioning/CMakeFiles/rebuild_cache.dir
 C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/wifi_provisioning/CMakeFiles/list_install_components.dir
 C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/wifi_provisioning/CMakeFiles/install/strip.dir
+C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/CMakeFiles/__idf_gpio.dir
+C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/CMakeFiles/install/local.dir
+C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/CMakeFiles/install.dir
+C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/CMakeFiles/edit_cache.dir
+C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/CMakeFiles/rebuild_cache.dir
+C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/CMakeFiles/list_install_components.dir
+C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/CMakeFiles/install/strip.dir
 C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/core/CMakeFiles/list_install_components.dir
 C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/core/CMakeFiles/__idf_core.dir
 C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/core/CMakeFiles/install/local.dir

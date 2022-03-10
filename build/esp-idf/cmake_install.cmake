@@ -121,6 +121,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/tinyusb/cmake_install.cmake")
   include("C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/ulp/cmake_install.cmake")
   include("C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/wifi_provisioning/cmake_install.cmake")
+  include("C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/gpio/cmake_install.cmake")
   include("C:/Users/Jeremy/Documents/GithubProjects/EspressUS/build/esp-idf/core/cmake_install.cmake")
 
 endif()

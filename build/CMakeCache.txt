@@ -248,7 +248,7 @@ EspressUS_BINARY_DIR:STATIC=C:/Users/Jeremy/Documents/GithubProjects/EspressUS/b
 EspressUS_SOURCE_DIR:STATIC=C:/Users/Jeremy/Documents/GithubProjects/EspressUS
 
 //Git command line client
-GIT_EXECUTABLE:FILEPATH=GIT_EXECUTABLE-NOTFOUND
+GIT_EXECUTABLE:FILEPATH=C:/Program Files/Git/cmd/git.exe
 
 //IDF Build Target
 IDF_TARGET:STRING=esp32
@@ -405,6 +405,9 @@ __idf_freemodbus_LIB_DEPENDS:STATIC=general;__idf_cxx;general;__idf_newlib;gener
 
 //Dependencies for the target
 __idf_freertos_LIB_DEPENDS:STATIC=general;__idf_cxx;general;__idf_newlib;general;__idf_esp_hw_support;general;__idf_heap;general;__idf_log;general;__idf_lwip;general;__idf_soc;general;__idf_hal;general;__idf_esp_rom;general;__idf_esp_common;general;__idf_esp_system;
+
+//Dependencies for the target
+__idf_gpio_LIB_DEPENDS:STATIC=general;__idf_cxx;general;__idf_newlib;general;__idf_freertos;general;__idf_esp_hw_support;general;__idf_heap;general;__idf_log;general;__idf_lwip;general;__idf_soc;general;__idf_hal;general;__idf_esp_rom;general;__idf_esp_common;general;__idf_esp_system;
 
 //Dependencies for the target
 __idf_hal_LIB_DEPENDS:STATIC=general;__idf_cxx;general;__idf_newlib;general;__idf_freertos;general;__idf_esp_hw_support;general;__idf_heap;general;__idf_log;general;__idf_lwip;general;__idf_soc;general;__idf_esp_rom;general;__idf_esp_common;general;__idf_esp_system;general;__idf_esp32;
@@ -632,7 +635,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=93
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=94
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -673,6 +676,8 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 CMAKE_STRIP-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Details about finding Git
+FIND_PACKAGE_MESSAGE_DETAILS_Git:INTERNAL=[C:/Program Files/Git/cmd/git.exe][v2.35.1.windows.2()]
 //Details about finding PythonInterp
 FIND_PACKAGE_MESSAGE_DETAILS_PythonInterp:INTERNAL=[C:/Users/Jeremy/AppData/Local/Programs/Python/Python39/python.exe][v3.9.8()]
 //ADVANCED property for variable: GIT_EXECUTABLE

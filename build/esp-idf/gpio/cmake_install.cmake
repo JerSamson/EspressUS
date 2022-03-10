@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/Jeremy/Documents/GithubProjects/EspressUS/application/gpio
+# Install script for directory: C:/Users/Jeremy/Documents/GithubProjects/EspressUS/models/gpio
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

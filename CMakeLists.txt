@@ -6,8 +6,8 @@
 set(CMAKE_CXX_STANDARD 17)
 cmake_minimum_required(VERSION 3.8)
 
-#Directories to include in build
-set(EXTRA_COMPONENT_DIRS core application) 
+# Directories to include in build
+set(EXTRA_COMPONENT_DIRS core models) 
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 

@@ -20,11 +20,15 @@ namespace Gpio
 
     esp_err_t GpioOutput::init(void)
     {
+        Serial.printf("GpioOutput initializing pin %d\n", _pin);
         esp_err_t status{GpioBase::init()};
 
         if(ESP_OK == status){
             Serial.printf("GpioOutput initialized (pin: %d)\n", _pin);
             status |= set(_inverted_logic);
+        }
+        else{
+            Serial.printf("GpioOutput NOT initialized (status: %d) (pin: %d)\n", _pin, status);
         }
 
         return status;

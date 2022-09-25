@@ -6,7 +6,7 @@ hx711_t::hx711_t(uint8_t _dout, uint8_t _sck) : dout(_dout), sck(_sck){
 
 void hx711_t::setup(){
     Serial.begin(115200);
-    rtc_clk_cpu_freq_set(RTC_CPU_FREQ_80M);
+    //rtc_clk_cpu_freq_set(RTC_CPU_FREQ_80M);
     scale.begin(dout, sck);
 }
 

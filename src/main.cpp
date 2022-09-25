@@ -53,6 +53,9 @@ void Main::run(void)
 {
   Serial.print("In main::run()...\n");
 
+  // CAN Bus
+  can_t.test_CAN();
+
   // LoadCell
   // loadCell.test_read();
 
@@ -63,20 +66,20 @@ void Main::run(void)
   // scan_for_I2C();
   // lcd.test_display();
   
-  lcd.display.begin();
+  // lcd.display.begin();
 
-  lcd.display.setTextSize(1);
-  lcd.display.setTextColor(SH110X_WHITE);
-  lcd.display.setCursor(32, 0);
-  const char *text = "Hello World!";
-  const char *text2 = "Do you want coffee?";
-  lcd.display.clearDisplay();
-  lcd.display.println(text);
-  lcd.display.println(text2);
-  lcd.display.display();
-  delay(10000);
-  lcd.display_logo();
-  delay(100000);
+  // lcd.display.setTextSize(1);
+  // lcd.display.setTextColor(SH110X_WHITE);
+  // lcd.display.setCursor(32, 0);
+  // const char *text = "Hello World!";
+  // const char *text2 = "Do you want coffee?";
+  // lcd.display.clearDisplay();
+  // lcd.display.println(text);
+  // lcd.display.println(text2);
+  // lcd.display.display();
+  // delay(10000);
+  // lcd.display_logo();
+  // delay(100000);
 
   // // float pressure = read_pressure();
   // // ble_pressure.update_pressure_value(pressure);
@@ -110,7 +113,13 @@ esp_err_t Main::setup()
   esp_err_t status {ESP_OK};
 
   Serial.println("Main Setup\n");
-    
+  
+  // ===== CANBus =====
+  Serial.println("This shit aint gonna work");
+  can_alim.init();
+  can_alim.set(true);
+  can_t.init_CAN(CAN_CTX_PIN, CAN_CRX_PIN);
+
   // ===== LoadCell ===== 
   Serial.print("Initializing load cell...\n");
   loadCellAlim.init();

@@ -17,6 +17,7 @@
 // #include "Adafruit_SH110X.h"
 #include <Wire.h>
 #include "HX711.h"
+#include "arduino_CAN_test.h"
 
 #define pdSECOND pdMS_TO_TICKS(1000)
 
@@ -30,6 +31,11 @@
 // #define OLED_DC       7
 // #define OLED_CS       5
 // #define OLED_RST      9
+
+// CAN Verin
+#define ALIM_CAN GPIO_NUM_33
+#define CAN_CTX_PIN 5
+#define CAN_CRX_PIN 4
 
 // LoadCell
 #define LOADCELL_ALIM_PIN GPIO_NUM_25
@@ -50,6 +56,10 @@ private:
 public:
     esp_err_t setup(void);
     void run(void);
+
+    // CAN Bus
+    arduino_CAN_test can_t = arduino_CAN_test();
+    Gpio::GpioOutput can_alim = Gpio::GpioOutput(ALIM_CAN);
 
     // Load Cell
     Gpio::GpioOutput loadCellAlim = Gpio::GpioOutput(LOADCELL_ALIM_PIN);

@@ -10,6 +10,22 @@ void hx711_t::setup(){
     scale.begin(dout, sck);
 }
 
+void hx711_t::zero(){
+  scale.tare();
+
+  long zero_factor = scale.read_average(); //Get a baseline reading
+  Serial.print("LOADCELL: Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
+  Serial.println(zero_factor);
+}
+
+void hx711_t::calibrate(float calibration_factor){
+  scale.set_scale(calibration_factor);
+}
+
+float hx711_t::get_load(int readings){
+  return scale.get_units(readings);
+}
+
 void hx711_t::test_read(){
   if (scale.is_ready()) {
     scale.set_scale();    

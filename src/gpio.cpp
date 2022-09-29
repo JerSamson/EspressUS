@@ -4,9 +4,7 @@
 
 namespace Gpio
 {
-
     // GpioBase
-
     esp_err_t GpioBase::init(void)
     {
         esp_err_t status{ESP_OK};
@@ -17,7 +15,6 @@ namespace Gpio
     }
 
     // GpioOutput
-
     esp_err_t GpioOutput::init(void)
     {
         Serial.printf("GpioOutput initializing pin %d\n", _pin);
@@ -30,7 +27,6 @@ namespace Gpio
         else{
             Serial.printf("GpioOutput NOT initialized (status: %d) (pin: %d)\n", _pin, status);
         }
-
         return status;
     }
 
@@ -43,7 +39,6 @@ namespace Gpio
     }
 
     // GpioADC
-
     int GpioADC::get_raw(void)
     {
         _value = analogRead(_pin);

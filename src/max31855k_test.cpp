@@ -4,6 +4,17 @@
 max31855k_t::max31855k_t(uint8_t vcc, uint8_t sck, uint8_t miso, uint8_t cs) : probe(cs, vcc, sck, miso){
 }
 
+float max31855k_t::get_temp(){
+    // Read the temperature in Celsius
+    float temperature = probe.readTempC();
+    if (!isnan(temperature)) {
+      Serial.print("Temp[C]=");
+      Serial.print(temperature);
+      return temperature;
+    }
+    return -1;
+}
+
 void max31855k_t::test_read()
 {
     float temperature = probe.readCJT();

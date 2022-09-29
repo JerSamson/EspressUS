@@ -16,6 +16,12 @@ hx711_t(uint8_t _dout, uint8_t _sck);
 
 void setup();
 
+void zero();
+void calibrate(float);
+float get_load(int=10);
+
 void test_read();
+
+
 
 };

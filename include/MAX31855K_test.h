@@ -11,5 +11,5 @@ class max31855k_t{
   max31855k_t(uint8_t vcc, uint8_t sck, uint8_t miso, uint8_t cs);
 
   void test_read();
-
+  float get_temp();
 };

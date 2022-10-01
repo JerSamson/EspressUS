@@ -11,7 +11,8 @@ void setup() {
 
 void loop() {
   my_main.run();
-  vTaskDelay(pdSECOND);
+  delay(200);
+  // vTaskDelay(pdSECOND);
 }
 
 void scan_for_I2C()
@@ -53,6 +54,8 @@ void Main::run(void)
 {
   Serial.print("In main::run()...\n");
 
+  controller.execute();
+
   // LoadCell
   // loadCell.test_read();
 
@@ -63,20 +66,20 @@ void Main::run(void)
   // scan_for_I2C();
   // lcd.test_display();
   
-  lcd.display.begin();
+  // lcd.display.begin();
 
-  lcd.display.setTextSize(1);
-  lcd.display.setTextColor(SH110X_WHITE);
-  lcd.display.setCursor(32, 0);
-  const char *text = "Hello World!";
-  const char *text2 = "Do you want coffee?";
-  lcd.display.clearDisplay();
-  lcd.display.println(text);
-  lcd.display.println(text2);
-  lcd.display.display();
-  delay(10000);
-  lcd.display_logo();
-  delay(100000);
+  // lcd.display.setTextSize(1);
+  // lcd.display.setTextColor(SH110X_WHITE);
+  // lcd.display.setCursor(32, 0);
+  // const char *text = "Hello World!";
+  // const char *text2 = "Do you want coffee?";
+  // lcd.display.clearDisplay();
+  // lcd.display.println(text);
+  // lcd.display.println(text2);
+  // lcd.display.display();
+  // delay(10000);
+  // lcd.display_logo();
+  // delay(100000);
 
   // // float pressure = read_pressure();
   // // ble_pressure.update_pressure_value(pressure);
@@ -109,23 +112,24 @@ esp_err_t Main::setup()
 {
   esp_err_t status {ESP_OK};
 
-  Serial.println("Main Setup\n");
+  Serial.println("Main Setup.");
     
   // ===== LoadCell ===== 
-  Serial.print("Initializing load cell...\n");
-  loadCellAlim.init();
-  loadCellAlim.set(true);
-  loadCell.setup();
+  status |= loadCell.setup(true);
+  if(ESP_OK != status){
+    Serial.println("ERROR - Main::Setup() Failed after loadcell setup.");
+    return status;
+  }
 
   // ===== Thermocouple ===== 
   // No init needed
 
   // ===== LCD ===== 
-  Serial.print("Initializing lcd...\n");
-  lcdAlim.init();
-  lcdAlim.set(true);
-  Wire.begin(21, 22);
-
+  status |= lcd.setup(true);
+  if(ESP_OK != status){
+    Serial.println("ERROR - Main::Setup() Failed after lcd setup.");
+    return status;
+  }
 
   // Old stuff
   // status |= pressureSensor.init();

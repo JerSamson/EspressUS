@@ -1,7 +1,8 @@
-#include "./MAX31855K_test.h"
+#include "./Devices/MAX31855K_test.h"
 
 
 max31855k_t::max31855k_t(uint8_t vcc, uint8_t sck, uint8_t miso, uint8_t cs) : probe(cs, vcc, sck, miso){
+  init = true;
 }
 
 float max31855k_t::get_temp(){

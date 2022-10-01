@@ -1,7 +1,45 @@
-#include "./sh110x_test.h"
+#include "./Devices/sh110x_test.h"
+
+sh110x_t::sh110x_t(int _sda, int _clk, gpio_num_t _alim_pin): sda(_sda), clk(_clk), alim(Gpio::GpioOutput(_alim_pin)){ 
+}
+
+esp_err_t sh110x_t::setup(bool initial_state){
+
+  Serial.println("Initializing lcd...");
+
+  esp_err_t status {ESP_OK};
+
+  status |= alim.init();
+  status |= alim.set(initial_state);
+
+  if(ESP_OK != status){
+    Serial.println("ERROR - LCD - Could not initialize alimentation gpio.");
+    init = false;
+    return status;
+  }
+
+  status |= Wire.begin(sda, clk) ? ESP_OK : ESP_ERR_INVALID_STATE;
+
+  if(ESP_OK != status){
+    Serial.println("ERROR - LCD - Could not execute wire.Begin(sda, clk).");
+    init = false;
+    return status;
+  }
+
+  // display.begin(0x3C, false);  // initialize with the I2C addr 0x3D (for the 128x64)
+
+  init = true;
+  return status;
+}
 
 void sh110x_t::display_logo(){
-    Serial.println("In DisplayLogo");
+  Serial.println("In DisplayLogo");
+
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
+
   display.begin(0x3C, false);  // initialize with the I2C addr 0x3D (for the 128x64)
   display.clearDisplay();
 
@@ -13,12 +51,29 @@ void sh110x_t::display_logo(){
 
 }
 
-void sh110x_t::display_text(char* text){
+void sh110x_t::display_text(const char* text, int textSize, int textColor, int cursorX, int cursorY, bool clear_display){
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
+  display.begin(0x3C, false);  // initialize with the I2C addr 0x3D (for the 128x64)
 
+  display.setTextSize(textSize);
+  display.setTextColor(SH110X_WHITE);
+  display.setCursor(cursorX, cursorY);
+  if(clear_display){
+    display.clearDisplay();
+  }
+  display.println(text);
+  display.display();
 }
 
 void sh110x_t::test_display()   {
 
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   //display.setContrast (0); // dim display
 
   // Start OLED
@@ -132,6 +187,10 @@ void sh110x_t::test_display()   {
 }
 
 void sh110x_t::testdrawbitmap(const uint8_t *bitmap, uint8_t w, uint8_t h) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   uint8_t icons[NUMFLAKES][3];
 
   // initialize
@@ -172,6 +231,10 @@ void sh110x_t::testdrawbitmap(const uint8_t *bitmap, uint8_t w, uint8_t h) {
 }
 
 void sh110x_t::testdrawchar(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
   display.setCursor(0, 0);
@@ -187,6 +250,10 @@ void sh110x_t::testdrawchar(void) {
 }
 
 void sh110x_t::testdrawcircle(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   for (int16_t i = 0; i < display.height(); i += 2) {
     display.drawCircle(display.width() / 2, display.height() / 2, i, SH110X_WHITE);
     display.display();
@@ -195,6 +262,10 @@ void sh110x_t::testdrawcircle(void) {
 }
 
 void sh110x_t::testfillrect(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   uint8_t color = 1;
   for (int16_t i = 0; i < display.height() / 2; i += 3) {
     // alternate colors
@@ -206,6 +277,10 @@ void sh110x_t::testfillrect(void) {
 }
 
 void sh110x_t::testdrawtriangle(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   for (int16_t i = 0; i < min(display.width(), display.height()) / 2; i += 5) {
     display.drawTriangle(display.width() / 2, display.height() / 2 - i,
                          display.width() / 2 - i, display.height() / 2 + i,
@@ -216,6 +291,10 @@ void sh110x_t::testdrawtriangle(void) {
 }
 
 void sh110x_t::testfilltriangle(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   uint8_t color = SH110X_WHITE;
   for (int16_t i = min(display.width(), display.height()) / 2; i > 0; i -= 5) {
     display.fillTriangle(display.width() / 2, display.height() / 2 - i,
@@ -229,6 +308,10 @@ void sh110x_t::testfilltriangle(void) {
 }
 
 void sh110x_t::testdrawroundrect(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   for (int16_t i = 0; i < display.height() / 2 - 2; i += 2) {
     display.drawRoundRect(i, i, display.width() - 2 * i, display.height() - 2 * i, display.height() / 4, SH110X_WHITE);
     display.display();
@@ -237,6 +320,10 @@ void sh110x_t::testdrawroundrect(void) {
 }
 
 void sh110x_t::testfillroundrect(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   uint8_t color = SH110X_WHITE;
   for (int16_t i = 0; i < display.height() / 2 - 2; i += 2) {
     display.fillRoundRect(i, i, display.width() - 2 * i, display.height() - 2 * i, display.height() / 4, color);
@@ -248,6 +335,10 @@ void sh110x_t::testfillroundrect(void) {
 }
 
 void sh110x_t::testdrawrect(void) {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   for (int16_t i = 0; i < display.height() / 2; i += 2) {
     display.drawRect(i, i, display.width() - 2 * i, display.height() - 2 * i, SH110X_WHITE);
     display.display();
@@ -256,6 +347,10 @@ void sh110x_t::testdrawrect(void) {
 }
 
 void sh110x_t::testdrawline() {
+  if(!is_active() || !is_init()){
+    Serial.println("WARNING - LCD - Tried to use LCD but it is either inactive or not initialized.");
+    return;
+  }
   for (int16_t i = 0; i < display.width(); i += 4) {
     display.drawLine(0, 0, i, display.height() - 1, SH110X_WHITE);
     display.display();

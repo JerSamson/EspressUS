@@ -1,22 +1,7 @@
-#include "Adafruit_SH110X.h"
-#include <SPI.h>
-#include <Wire.h>
+#pragma once
+
 #include <Adafruit_GFX.h>
-#include <Adafruit_SH110X.h>
 
-#define OLED_MOSI     12
-#define OLED_CLK      14
-#define OLED_DC       13
-#define OLED_CS       -1
-#define OLED_RST      -1
-
-#define NUMFLAKES 10
-#define XPOS 0
-#define YPOS 1
-#define DELTAY 2
-
-#define LOGO16_GLCD_HEIGHT 16
-#define LOGO16_GLCD_WIDTH  16
 static const unsigned char PROGMEM logo16_glcd_bmp[] =
 { B00000000, B11000000,
   B00000001, B11000000,
@@ -239,36 +224,3 @@ const unsigned char logo_espressus_bmp2 [] PROGMEM = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
-
-class sh110x_t{
-public:
-// Create the OLED display
-// Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RST, OLED_CS);
-Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &Wire);
-
-void display_text(char*);
-void display_logo();
-
-void test_display();
-
-void testdrawbitmap(const uint8_t *bitmap, uint8_t w, uint8_t h);
-
-void testdrawchar(void);
-
-void testdrawcircle(void);
-
-void testfillrect(void);
-
-void testdrawtriangle(void);
-
-void testfilltriangle(void);
-
-void testdrawroundrect(void);
-
-void testfillroundrect(void);
-
-void testdrawrect(void);
-
-void testdrawline();
-};
-

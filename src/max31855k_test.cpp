@@ -9,10 +9,11 @@ float max31855k_t::get_temp(){
     // Read the temperature in Celsius
     float temperature = probe.readTempC();
     if (!isnan(temperature)) {
-      Serial.print("Temp[C]=");
-      Serial.print(temperature);
+      Serial.printf("Temp[C]=%f\n", temperature);
       return temperature;
     }
+
+    Serial.println("WARNING - max31855k_t::get_temp() - thermocouple data is NAN");
     return -1;
 }
 

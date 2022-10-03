@@ -52,7 +52,7 @@ void scan_for_I2C()
 
 void Main::run(void)
 {
-  Serial.print("In main::run()...\n");
+  Serial.println("In main::run()...");
 
   controller.execute();
 

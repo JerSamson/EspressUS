@@ -18,7 +18,7 @@ esp_err_t hx711_t::setup(bool initial_state){
     status |= alim.set(initial_state);
 
     if(ESP_OK != status){
-      Serial.println("ERROR - Could not initialize loadCell's alimentation gpio.");
+      Serial.println("ERROR - hx711_t::setup() - Could not initialize loadCell's alimentation gpio.");
       init = false;
       return status;
     }
@@ -33,20 +33,19 @@ esp_err_t hx711_t::setup(bool initial_state){
 
 void hx711_t::zero(){
   if(!is_active() || !is_init() || !scale.is_ready()){
-    Serial.println("WARNING - LOADCELL - Tried to use loadCell but it is either inactive or not initialized.");
+    Serial.println("WARNING - hx711_t::zero() - Tried to use loadCell but it is either inactive or not initialized.");
     return;
   }
 
   scale.tare();
 
   long zero_factor = scale.read_average(); //Get a baseline reading
-  Serial.print("LOADCELL: Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
-  Serial.println(zero_factor);
+  Serial.printf("LOADCELL: Zero factor: %ld\n", zero_factor);
 }
 
 void hx711_t::calibrate(float calibration_factor){
   if(!is_active() || !is_init() || !scale.is_ready()){
-    Serial.println("WARNING - LOADCELL - Tried to use loadCell but it is either inactive or not initialized.");
+    Serial.println("WARNING - hx711_t::calibrate() - Tried to use loadCell but it is either inactive or not initialized.");
     return;
   }
   scale.set_scale(calibration_factor);
@@ -54,7 +53,7 @@ void hx711_t::calibrate(float calibration_factor){
 
 float hx711_t::get_load(int readings){
   if(!is_active() || !is_init() || !scale.is_ready()){
-    Serial.println("WARNING - LOADCELL - Tried to use loadCell but it is either inactive or not initialized.");
+    Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is either inactive or not initialized.");
     return 0.0;
   }
 
@@ -63,7 +62,7 @@ float hx711_t::get_load(int readings){
 
 void hx711_t::test_read(){
   if(!is_active() || !is_init() || !scale.is_ready()){
-    Serial.println("WARNING - LOADCELL - Tried to use loadCell but it is either inactive or not initialized.");
+    Serial.println("WARNING - hx711_t::test_read() - Tried to use loadCell but it is either inactive or not initialized.");
     return;
   }
   

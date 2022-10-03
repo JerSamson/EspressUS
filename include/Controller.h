@@ -31,13 +31,23 @@ class Controller{
     uint64_t ms_since_last_exec(){return get_ellapsed_ms(last_execution);}
     uint64_t ms_since_start(){return get_ellapsed_ms(begin);}
 
-    float load = 0;
-    float temp = 0;
+    float load = NAN;
+    float temp = NAN;
 
     std::map<uint64_t, float> temp_history;
+    std::map<uint64_t, float> d_temp_history;
+    std::map<uint64_t, float> i_temp_history;
+
     std::map<uint64_t, float> load_history;
+    std::map<uint64_t, float> d_load_history;
+    std::map<uint64_t, float> i_load_history;
     
     public:
+
+    float derivate(uint64_t time1, float value1, uint64_t time2, float value2, int time_factor = 1000);
+    float integrate(uint64_t time1, float value1, uint64_t time2, float value2, int time_factor = 1000);
+
+    void clear_history();
 
     void reset_time();
     int64_t get_ellapsed_ms(std::chrono::steady_clock::time_point since);

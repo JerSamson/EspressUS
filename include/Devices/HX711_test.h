@@ -18,8 +18,9 @@ bool init = false;
 
 public:
 
-bool is_active(){return alim.state();}
-bool is_init(){ return init;}
+bool is_active(){ return alim.state(); }
+bool is_init(){ return init; }
+bool can_read(){ return is_active() && is_init() && scale.is_ready(); }
 
 bool toggle(){
     alim.toggle();

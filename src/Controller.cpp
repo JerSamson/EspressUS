@@ -1,7 +1,8 @@
 #include "Controller.h"
 
 Controller::Controller(max31855k_t* thermo, hx711_t* lc, sh110x_t* _lcd) : thermocouple(thermo), loadCell(lc), lcd(_lcd){
-  Serial.println("Constructing controller...");
+    Serial.println("Constructing controller...");
+    clear_history();
 }
 
 STATES Controller::execute(){
@@ -74,6 +75,7 @@ STATES Controller::execute(){
 
     current_state = next_state;
 }
+
 void Controller::reset_time(){
     begin = std::chrono::steady_clock::now();
 }
@@ -86,19 +88,92 @@ void Controller::update_values(){
 
     uint64_t ellapsed = ms_since_start();
 
+    // Temperature readings
     if(thermocouple->is_init()){
+        float last_temp = temp;
+        uint64_t last_ellapsed = (temp_history.rbegin())->first;
+
+        // Get and save current temp
         temp = thermocouple->get_temp();
-        temp_history[ellapsed] = temp;
+
+        // Valid reading
+        if(temp != -1){
+            temp_history[ellapsed] = temp;
+
+            // Compute and save temp derivative according to last mesured temp
+            if(last_temp != NAN){
+                d_temp_history[ellapsed] = derivate(last_ellapsed, last_temp, ellapsed, temp);
+            }
+
+            // Compute and save temp integral according to last mesured temp
+            float last_i = (i_temp_history.rbegin())->second;
+            float i = integrate(last_ellapsed, last_temp, ellapsed, temp);
+            i_temp_history[ellapsed] = last_i + i;
+        }else{
+            Serial.println("WARNING - Controller::update_values() - Could not get a valid reading from thermocouple.");
+        }
     }
     else{
-        Serial.println("WARNING - Could not get temperature since thermocouple is not initialized.");
+        Serial.println("WARNING - Controller::update_values() - Could not get temperature since thermocouple is not initialized.");
     }
 
-    if(loadCell->is_init() && loadCell->is_active()){
+    // Load cell readings
+    if(loadCell->can_read()){
+        float last_load = temp;
+        uint64_t last_ellapsed = (load_history.rbegin())->first;
+
+        // Get and save current load
         load = loadCell->get_load();
         load_history[ellapsed] = load;
+
+        // TODO: No direct way to validate reading...
+
+        // Compute and save derivative according to last mesured load
+        if(last_load != NAN){
+            d_load_history[ellapsed] = derivate(last_ellapsed, last_load, ellapsed, load);
+        }
+
+        // Compute and save load integral according to last mesured load
+        float last_i = (i_load_history.rbegin())->second;
+        float i = integrate(last_ellapsed, last_load, ellapsed, load);
+        i_load_history[ellapsed] = last_i + i;
     }
     else{
-        Serial.println("WARNING - Could not get loadCell data since it is either not initialized or inactive.");
+        Serial.println("WARNING - Controller::update_values() - Could not get loadCell data since it is either not initialized or inactive.");
     }
+}
+
+float Controller::derivate(uint64_t time1, float value1, uint64_t time2, float value2, int time_factor){
+    float dvalue = value2 - value1;
+    uint64_t dtime = (time2 - time1)/time_factor;
+    return dvalue/dtime;
+}
+
+float Controller::integrate(uint64_t time1, float value1, uint64_t time2, float value2, int time_factor){
+    uint64_t dtime = (time2 - time1)/time_factor;
+    if(value1 > value2){
+        return (value2 * dtime) + ((value1 - value2)*dtime/2);
+    }
+    else if (value1 < value2)
+    {
+        return (value1 * dtime) + ((value2 - value1)*dtime/2);
+    }
+    else{
+        return value1*dtime;
+    }
+}
+
+// Clears and initialize history maps
+void Controller::clear_history(){
+    temp_history.clear();
+    d_temp_history.clear();
+    i_temp_history.clear();
+    i_temp_history[0] = 0;
+
+    load_history.clear();
+    d_load_history.clear();
+    i_load_history.clear();
+    i_load_history[0] = 0;
+
+    Serial.println("CONTROLLER - Data history cleared.");
 }

@@ -8,6 +8,7 @@ bool arduino_CAN_test::init_CAN(uint8_t ctx, uint8_t crx)
         Serial.println("Starting CAN failed!");
         return false;
     }
+    Serial.println("Starting CAN worked!?");
     return true;
 }
 
@@ -15,7 +16,7 @@ void arduino_CAN_test::test_CAN()
 {
     // try to parse packet
     int packetSize = CAN.parsePacket();
-
+    Serial.println(packetSize);
     if (packetSize) {
         // received a packet
         Serial.print("Received ");

@@ -121,19 +121,19 @@ esp_err_t Main::setup()
   can_t.init_CAN(CAN_CTX_PIN, CAN_CRX_PIN);
 
   // ===== LoadCell ===== 
-  Serial.print("Initializing load cell...\n");
-  loadCellAlim.init();
-  loadCellAlim.set(true);
-  loadCell.setup();
+  // Serial.print("Initializing load cell...\n");
+  // loadCellAlim.init();
+  // loadCellAlim.set(true);
+  // loadCell.setup();
 
   // ===== Thermocouple ===== 
   // No init needed
 
   // ===== LCD ===== 
-  Serial.print("Initializing lcd...\n");
-  lcdAlim.init();
-  lcdAlim.set(true);
-  Wire.begin(21, 22);
+  // Serial.print("Initializing lcd...\n");
+  // lcdAlim.init();
+  // lcdAlim.set(true);
+  // Wire.begin(21, 22);
 
 
   // Old stuff

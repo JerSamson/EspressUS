@@ -69,7 +69,11 @@ namespace Gpio
         // analogReadResolution(_width);
         // analogSetPinAttenuation(_pin, _attenuation);
 
-        Serial.printf("GpioADC initialized:\n\tpin: %d\n\twidth: %d\n\tatten: %d\n", _pin, _width, _attenuation );
+        if(ESP_OK == status){
+            Serial.printf("GpioADC initialized:\n\tpin: %d\n\twidth: %d\n\tatten: %d\n", _pin, _width, _attenuation);
+        }else{
+            Serial.println("ERROR - GpioADC::init() - Could not initialize ADC");
+        }
 
         return status;
     }

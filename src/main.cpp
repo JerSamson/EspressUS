@@ -87,12 +87,17 @@ esp_err_t Main::setup()
 
   Devices = _Devices::getInstance();
 
+  _Configuration config = _Configuration::getInstance();
+  config.loadConfig(config_map.at(CONFIG::Default));
+
   // ===== LoadCell ===== 
-  status |= Devices.loadCell.setup(true);
+  status |= Devices.loadCell.init();
   if(ESP_OK != status){
     Serial.println("ERROR - Main::Setup() - Loadcell setup failed.");
     return status;
   }
+  
+  Devices.loadCell.set(true);
 
   // ===== Thermocouple ===== 
   // No init needed

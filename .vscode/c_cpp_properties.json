@@ -1,8 +1,3 @@
-//
-// !!! WARNING !!! AUTO-GENERATED FILE!
-// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
-// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
-//
 {
     "configurations": [
         {
@@ -109,7 +104,8 @@
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
-                ""
+                "",
+                "${workspaceFolder}/lib/ArduinoJson/src"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,

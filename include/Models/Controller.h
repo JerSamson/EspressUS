@@ -5,12 +5,17 @@
 #include "./Devices/Devices.h"
 #include <chrono>
 #include <map>
+#include "Configuration.h"
+
+
 
 class Controller final{
     private:
     static _Devices& Devices;
+    static _Configuration& Configuration;
 
-    State current_state = idle;
+    esp_err_t status = ESP_OK;
+    State current_state = idle_state;
 
     //debug
     bool first_itt = true;
@@ -100,25 +105,37 @@ class Controller final{
     static bool dripping_to_ready();
     static bool dripping_to_flush();
     static bool flush_to_ready();
+    static bool error_to_idle();
 
     // States
     const std::map<STATES, State> state_map = {
-        {STATES::IDLE, idle},
-        {STATES::INIT, init},
-        {STATES::HEATING, heating},
-        {STATES::FILL_BOILER, fill_boiler},
-        {STATES::READY, ready},
-        {STATES::VERIN_UP, verin_up},
-        {STATES::FILLING_HEAD, filling_head},
-        {STATES::EXTRACT, extract},
-        {STATES::DONE, enjoy},
-        {STATES::CHOKE, choke},
-        {STATES::DRIPPING, dripping},
-        {STATES::FLUSH, flush}
-        // {STATES::ERROR, error},
+        {STATES::IDLE, idle_state},
+        {STATES::INIT, init_state},
+        {STATES::HEATING, heating_state},
+        {STATES::FILL_BOILER, fill_boiler_state},
+        {STATES::READY, ready_state},
+        {STATES::VERIN_UP, verin_up_state},
+        {STATES::FILLING_HEAD, filling_head_state},
+        {STATES::EXTRACT, extract_state},
+        {STATES::DONE, enjoy_state},
+        {STATES::CHOKE, choke_state},
+        {STATES::DRIPPING, dripping_state},
+        {STATES::FLUSH, flush_state},
+        {STATES::ERROR, error_state}
     };
 
-    State idle = {
+    State error_state = {
+        state: STATES::ERROR,
+        transitions: {
+            {
+                next_state: STATES::INIT,
+                condition: Controller::error_to_idle
+            }
+        },
+        action: &Controller::error_action
+    };
+
+    State idle_state = {
         state: STATES::IDLE,
         transitions: {
             {
@@ -129,7 +146,7 @@ class Controller final{
         action: &Controller::idle_action
     };
 
-    State init = {
+    State init_state = {
         state: STATES::INIT,
         transitions: {
             {
@@ -140,7 +157,7 @@ class Controller final{
         action: &Controller::init_action
     };
 
-    State heating = {
+    State heating_state = {
         state: STATES::HEATING,
         transitions: {
             {
@@ -157,7 +174,7 @@ class Controller final{
         action: &Controller::heating_action
     };
 
-    State fill_boiler = {
+    State fill_boiler_state = {
         state: STATES::FILL_BOILER,
         transitions: {
             {
@@ -168,7 +185,7 @@ class Controller final{
         action: &Controller::fill_boiler_action
     };
 
-    State ready = {
+    State ready_state = {
         state: STATES::READY,
         transitions: {
             {
@@ -185,7 +202,7 @@ class Controller final{
         action: &Controller::ready_action
     };
 
-    State verin_up = {
+    State verin_up_state = {
         state: STATES::VERIN_UP,
         transitions: {
             {
@@ -197,7 +214,7 @@ class Controller final{
         action: &Controller::verin_up_action
     };
 
-    State filling_head = {
+    State filling_head_state = {
         state: STATES::FILLING_HEAD,
         transitions: {
             {
@@ -209,7 +226,7 @@ class Controller final{
         action: &Controller::filling_head_action
     };
 
-    State extract = {
+    State extract_state = {
         state: STATES::EXTRACT,
         transitions: {
             {
@@ -226,7 +243,7 @@ class Controller final{
         action: &Controller::extract_action
     };
 
-    State enjoy = {
+    State enjoy_state = {
         state: STATES::DONE,
         transitions: {
             {
@@ -238,7 +255,7 @@ class Controller final{
         action: &Controller::done_action
     };
 
-    State choke = {
+    State choke_state = {
         state: STATES::CHOKE,
         transitions: {
             {
@@ -255,7 +272,7 @@ class Controller final{
         action: &Controller::choke_action
     };
 
-    State dripping = {
+    State dripping_state = {
         state: STATES::DRIPPING,
         transitions: {
             {
@@ -272,7 +289,7 @@ class Controller final{
         action: &Controller::dripping_action
     };
     
-    State flush = {
+    State flush_state = {
         state: STATES::FLUSH,
         transitions: {
             {

@@ -2,13 +2,15 @@
 
 Controller::Controller(){
     Devices = _Devices::getInstance();
+    Configuration = _Configuration::getInstance();
+
     clear_history();
 }
 
 State Controller::get_next_state() const{
-    // if(ESP_OK != _status){
-    //     return STATES::ERROR;
-    // }
+    if(ESP_OK != status){
+        return error_state;
+    }
 
     for( unsigned int i = 0; i < sizeof(current_state.transitions)/sizeof(current_state.transitions[0]); i = i + 1 ){
         if(current_state.transitions[i].condition()){
@@ -20,11 +22,14 @@ State Controller::get_next_state() const{
 }
 
 esp_err_t Controller::execute(){
-    esp_err_t status{ESP_OK};
-
-    status |= current_state.action();
+    if(!Configuration.is_valid()){
+        Serial.println("ERROR - Controller::execute - Invalid configuration.");
+        status = ESP_ERR_INVALID_STATE;
+        return status;
+    }
 
     if(ESP_OK == status){
+        status |= current_state.action();
         current_state = get_next_state();
     }
 
@@ -57,7 +62,7 @@ void Controller::update_values(){
     Serial.println("INFO - Controller::update_values() - Reading temperature...");
     if(using_thermo && Devices.thermocouple.is_init()){
         float last_temp = temp;
-        uint64_t last_ellapsed = NAN;
+        uint64_t last_ellapsed = 0;
 
         if(!temp_history.empty()){
             last_ellapsed = (temp_history.rbegin())->first;
@@ -91,7 +96,7 @@ void Controller::update_values(){
     Serial.println("INFO - Controller::update_values() - Reading Load cell...");
     if(using_loadcell && Devices.loadCell.can_read()){
         float last_load = temp;
-        uint64_t last_ellapsed = NAN;
+        uint64_t last_ellapsed = 0;
 
         if(!load_history.empty()){
             last_ellapsed = (load_history.rbegin())->first;
@@ -121,7 +126,7 @@ void Controller::update_values(){
     Serial.println("INFO - Controller::update_values() - Reading pressure...");
     if(using_pressure && Devices.pressureSensor.is_init()){
         float last_pressure = pressure;
-        uint64_t last_ellapsed = NAN;
+        uint64_t last_ellapsed = 0;
         
         if(!pressure_history.empty()){
             last_ellapsed = (pressure_history.rbegin())->first;
@@ -288,8 +293,8 @@ void Controller::clear_history(){
     }
 
     bool Controller::heating_to_ready(){
-        float target = 95.0;
-        return Devices.thermocouple.get_temp() >= target;
+        return Devices.thermocouple.get_temp() >= Configuration.target_temp;
+        return false;
     }
 
     bool Controller::heating_to_fill_boiler(){
@@ -350,5 +355,9 @@ void Controller::clear_history(){
     }
 
     bool Controller::flush_to_ready(){
+        return false;
+    }
+
+    bool Controller::error_to_idle(){
         return false;
     }

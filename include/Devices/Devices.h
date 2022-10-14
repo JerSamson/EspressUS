@@ -4,6 +4,7 @@
 #include "./Devices/MAX31855K_test.h"
 #include "./Devices/sh110x_test.h"
 #include "./Devices/pressureSensor.h"
+#include "./Devices/pump.h"
 
 // LCD
 #define LCD_ALIM_PIN GPIO_NUM_13
@@ -28,6 +29,11 @@
 #define PRESSURESENSOR_ADC_WIDTH ADC_WIDTH_12Bit
 #define PRESSURESENSOR_ADC_ATTENUATION ADC_11db
 
+// Pump controller
+#define PUMP_DIR_PIN 26
+#define PUMP_PWM_PIN 14
+
+
 class _Devices{
     public:
 
@@ -45,6 +51,7 @@ class _Devices{
     static max31855k_t thermocouple;
     static sh110x_t lcd;
     static pressureSensor_t pressureSensor;
+    static Pump pump;
 
     private:
 

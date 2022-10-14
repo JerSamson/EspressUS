@@ -96,14 +96,14 @@ esp_err_t Main::setup()
     Serial.println("ERROR - Main::Setup() - Loadcell setup failed.");
     return status;
   }
-  
+
   Devices.loadCell.set(true);
 
   // ===== Thermocouple ===== 
   // No init needed
 
   // ===== LCD ===== 
-  status |= Devices.lcd.setup(true);
+  status |= Devices.lcd.init(true);
   if(ESP_OK != status){
     Serial.println("ERROR - Main::Setup() - LCD setup failed.");
     return status;
@@ -113,6 +113,13 @@ esp_err_t Main::setup()
   status |= Devices.pressureSensor.init();
   if(ESP_OK != status){
     Serial.println("ERROR - Main::Setup() - Failed to init pressure sensor's adc.");
+    return status;
+  }
+
+  // ===== Pump controller =====
+  status |= Devices.pump.init();
+  if(ESP_OK != status){
+    Serial.println("ERROR - Main::Setup() - Failed to init pump.");
     return status;
   }
 

@@ -3,7 +3,7 @@
 sh110x_t::sh110x_t(int _sda, int _clk, gpio_num_t _alim_pin): sda(_sda), clk(_clk), alim(Gpio::GpioOutput(_alim_pin)){ 
 }
 
-esp_err_t sh110x_t::setup(bool initial_state){
+esp_err_t sh110x_t::init(bool initial_state){
 
   Serial.println("Initializing lcd...");
 
@@ -14,7 +14,7 @@ esp_err_t sh110x_t::setup(bool initial_state){
 
   if(ESP_OK != status){
     Serial.println("ERROR - sh110x_t::setup() - Could not initialize alimentation gpio.");
-    init = false;
+    init_success = false;
     return status;
   }
 
@@ -22,13 +22,13 @@ esp_err_t sh110x_t::setup(bool initial_state){
 
   if(ESP_OK != status){
     Serial.println("ERROR - sh110x_t::setup() - Could not execute wire.Begin(sda, clk).");
-    init = false;
+    init_success = false;
     return status;
   }
 
   // display.begin(0x3C, false);  // initialize with the I2C addr 0x3D (for the 128x64)
 
-  init = true;
+  init_success = true;
   return status;
 }
 

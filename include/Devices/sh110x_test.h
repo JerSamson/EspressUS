@@ -29,7 +29,7 @@ int sda;
 int clk;
 Gpio::GpioOutput alim;
 
-bool init = false;
+bool init_success = false;
 
 public:
 bool is_active(){return alim.state();}
@@ -42,9 +42,9 @@ sh110x_t(int _sda, int _clk, gpio_num_t _alim_pin);
 // Create the OLED display
 Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &Wire);
 
-esp_err_t setup(bool initial_state=true);
+esp_err_t init(bool initial_state=true);
 
-bool is_init(){ return init;}
+bool is_init(){ return init_success;}
 
   // lcd.display.begin();
 

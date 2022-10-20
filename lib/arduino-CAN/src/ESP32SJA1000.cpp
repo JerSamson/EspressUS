@@ -219,7 +219,7 @@ int ESP32SJA1000Class::parsePacket()
 {
   if ((readRegister(REG_SR) & 0x01) != 0x01) {
     // no packet
-    Serial.println(readRegister(REG_SR));
+    // Serial.println(readRegister(REG_SR));
     return 0;
   }
 

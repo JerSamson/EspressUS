@@ -1,3 +1,8 @@
 {
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "files.associations": {
+        "iosfwd": "cpp",
+        "iomanip": "cpp",
+        "sstream": "cpp"
+    }
 }

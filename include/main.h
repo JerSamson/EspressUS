@@ -34,8 +34,8 @@
 
 // CAN Verin
 #define ALIM_CAN GPIO_NUM_33
-#define CAN_CTX_PIN 5
-#define CAN_CRX_PIN 4
+#define CAN_CTX_PIN GPIO_NUM_5
+#define CAN_CRX_PIN GPIO_NUM_4
 
 // LoadCell
 #define LOADCELL_ALIM_PIN GPIO_NUM_25
@@ -43,8 +43,8 @@
 #define LOADCELL_SCK_PIN 14
 
 // Thermocouple
-#define THERMO_VCC 4
-#define THERMO_CS_PIN 5
+// #define THERMO_VCC 4
+// #define THERMO_CS_PIN 5
 #define THERMO_SCK_PIN 18
 #define THERMO_MISO_PIN 19
 
@@ -66,7 +66,7 @@ public:
     hx711_t loadCell = hx711_t(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
 
     // Thermocouple
-    max31855k_t thermo = max31855k_t(THERMO_VCC, THERMO_SCK_PIN, THERMO_MISO_PIN, THERMO_CS_PIN);
+    // max31855k_t thermo = max31855k_t(THERMO_VCC, THERMO_SCK_PIN, THERMO_MISO_PIN, THERMO_CS_PIN);
 
     // LCD
     Gpio::GpioOutput lcdAlim = Gpio::GpioOutput(LCD_ALIM_PIN);

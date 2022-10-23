@@ -29,7 +29,7 @@ public:
     _Devices& Devices = _Devices::getInstance();
 
     // Controller
-    Controller controller;
+    Controller controller = Controller();
 
     // Test methods
 

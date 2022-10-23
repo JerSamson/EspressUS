@@ -1,10 +1,12 @@
 #pragma once
 
+#include "Arduino.h"
 #include "./Devices/HX711_test.h"
 #include "./Devices/MAX31855K_test.h"
 #include "./Devices/sh110x_test.h"
 #include "./Devices/pressureSensor.h"
 #include "./Devices/pump.h"
+#include "./Devices/SSR.h"
 
 // LCD
 #define LCD_ALIM_PIN GPIO_NUM_13
@@ -33,8 +35,11 @@
 #define PUMP_DIR_PIN 26
 #define PUMP_PWM_PIN 14
 
+// SSR TEST
+#define SSR_TEST_PIN GPIO_NUM_23 
 
-class _Devices{
+
+class _Devices: public DeviceBase{
     public:
 
     static _Devices& getInstance()
@@ -47,14 +52,17 @@ class _Devices{
     // _Devices(_Devices const&)        = delete;
     // void operator=(_Devices const&)  = delete;
 
+    virtual esp_err_t init();
+
     static hx711_t loadCell;
     static max31855k_t thermocouple;
     static sh110x_t lcd;
     static pressureSensor_t pressureSensor;
     static Pump pump;
+    static SSR testSSR;
 
     private:
-
+    static DeviceBase* init_list[];
     _Devices() {}
     // _Devices(_Devices const&);       // Don't Implement
     // void operator=(_Devices const&); // Don't implement

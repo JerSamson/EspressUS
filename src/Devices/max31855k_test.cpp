@@ -2,7 +2,6 @@
 
 
 max31855k_t::max31855k_t(uint8_t vcc, uint8_t sck, uint8_t miso, uint8_t cs) : probe(cs, vcc, sck, miso){
-  init = true;
 }
 
 float max31855k_t::get_temp(){
@@ -57,4 +56,9 @@ void max31855k_t::test_read()
     }
 
     delay(750);
+  }
+
+  esp_err_t max31855k_t::init(){
+    Serial.println("INFO - max31855k_t::init() - Initializing thermocouple...");
+    return ESP_OK;
   }

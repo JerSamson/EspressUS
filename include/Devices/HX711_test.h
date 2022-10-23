@@ -3,9 +3,10 @@
 #include <Arduino.h>
 #include "soc/rtc.h"
 #include "HX711.h"
+#include "DeviceBase.h"
 #include "./Models/Gpio/gpio.h"
 
-class hx711_t{
+class hx711_t: public DeviceBase{
 
 protected:
 
@@ -13,11 +14,11 @@ uint8_t dout;
 uint8_t sck;
 Gpio::GpioOutput alim;
 HX711 scale;
-bool init_success = false;
+// bool init_success = false;
 
 public:
 
-bool is_init(){ return init_success; }
+// bool is_init(){ return init_success; }
 bool is_active(){ return alim.state(); }
 bool can_read(){ return is_active() && is_init() && scale.is_ready(); }
 
@@ -35,7 +36,7 @@ hx711_t(uint8_t _dout, uint8_t _sck, gpio_num_t _alim_pin);
 
 virtual esp_err_t init();
 
-void zero();
+long zero();
 void calibrate(float);
 float get_load(int=10);
 

@@ -7,6 +7,7 @@
 #include <Adafruit_SH110X.h>
 #include "./bitmaps/bitmaps.h"
 #include "./Models/Gpio/gpio.h"
+#include "DeviceBase.h"
 
 #define OLED_MOSI     12
 #define OLED_CLK      14
@@ -22,14 +23,15 @@
 #define LOGO16_GLCD_HEIGHT 16
 #define LOGO16_GLCD_WIDTH  16
 
-class sh110x_t{
+class sh110x_t: public DeviceBase{
 
 private:
 int sda;
 int clk;
 Gpio::GpioOutput alim;
+bool initial_state;
 
-bool init_success = false;
+// bool init_success = false;
 
 public:
 bool is_active(){return alim.state();}
@@ -38,11 +40,12 @@ bool toggle(){
     return alim.state();
 }
 
-sh110x_t(int _sda, int _clk, gpio_num_t _alim_pin);
+sh110x_t(int _sda, int _clk, gpio_num_t _alim_pin, bool _initial_state = true);
 // Create the OLED display
 Adafruit_SH1106G display = Adafruit_SH1106G(128, 64, &Wire);
 
-esp_err_t init(bool initial_state=true);
+virtual esp_err_t init();
+// esp_err_t init(bool initial_state=true);
 
 bool is_init(){ return init_success;}
 

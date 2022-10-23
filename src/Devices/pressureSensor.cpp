@@ -4,6 +4,7 @@ pressureSensor_t::pressureSensor_t(gpio_num_t pin, adc1_channel_t channel , adc_
 }
 
 esp_err_t pressureSensor_t::init(){
+    Serial.println("INFO - pressureSensor_t::init() - Initializing pressure Sensor...");
     esp_err_t status{ESP_OK};
     status |= adc.init();
 

@@ -1,21 +1,24 @@
 #pragma once
 
 #include <Arduino.h>
+#include <functional>
 #include "State.h"
 #include "./Devices/Devices.h"
 #include <chrono>
 #include <map>
 #include "Configuration.h"
 
-
-
 class Controller final{
     private:
     static _Devices& Devices;
     static _Configuration& Configuration;
 
+    bool first_loop = true;
+
     esp_err_t status = ESP_OK;
     State current_state = idle_state;
+
+    void initialize_states(Controller*);
 
     //debug
     bool first_itt = true;
@@ -54,7 +57,7 @@ class Controller final{
     void debug_print_map(std::map<uint64_t, float> map);
     //
 
-    State get_next_state() const;
+    State get_next_state();
 
     float derivate(uint64_t time1, float value1, uint64_t time2, float value2, int time_factor = 1000);
     float integrate(uint64_t time1, float value1, uint64_t time2, float value2, int time_factor = 1000);
@@ -124,180 +127,200 @@ class Controller final{
         {STATES::ERROR, error_state}
     };
 
-    State error_state = {
+    const State error_state = {
         state: STATES::ERROR,
         transitions: {
             {
-                next_state: STATES::INIT,
-                condition: Controller::error_to_idle
+                next_state: STATES::IDLE,
+                condition: &Controller::error_to_idle
             }
         },
         action: &Controller::error_action
     };
+    //  = {
+    //     state: STATES::ERROR,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::INIT,
+    //             condition: &Controller::error_to_idle
+    //         }
+    //     },
+    //     action: &Controller::error_action
+    // };
 
-    State idle_state = {
+    const State idle_state
+     = {
         state: STATES::IDLE,
         transitions: {
             {
                 next_state: STATES::INIT,
-                condition: Controller::idle_to_init
+                condition: &Controller::idle_to_init
             }
         },
         action: &Controller::idle_action
     };
 
-    State init_state = {
+    const State init_state
+     = {
         state: STATES::INIT,
         transitions: {
             {
                 next_state: STATES::HEATING,
-                condition: Controller::init_to_heating
+                condition: &Controller::init_to_heating
             }
         },
         action: &Controller::init_action
     };
 
-    State heating_state = {
-        state: STATES::HEATING,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: Controller::heating_to_ready
-            },
-            {
-                next_state: STATES::FILL_BOILER,
-                condition: Controller::heating_to_fill_boiler
-            }
-            // heating_to_ready,
-            // heating_to_fill_boiler
-        },
-        action: &Controller::heating_action
-    };
+    State heating_state;
+    //  = {
+    //     state: STATES::HEATING,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::READY,
+    //             condition: &Controller::heating_to_ready
+    //         },
+    //         {
+    //             next_state: STATES::FILL_BOILER,
+    //             condition: &Controller::heating_to_fill_boiler
+    //         }
+    //     },
+    //     action: &Controller::heating_action
+    // };
 
-    State fill_boiler_state = {
-        state: STATES::FILL_BOILER,
-        transitions: {
-            {
-                next_state: STATES::HEATING,
-                condition: Controller::fill_boiler_to_heating
-            }
-        },
-        action: &Controller::fill_boiler_action
-    };
+    State fill_boiler_state;
+    //  = {
+    //     state: STATES::FILL_BOILER,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::HEATING,
+    //             condition: &Controller::fill_boiler_to_heating
+    //         }
+    //     },
+    //     action: &Controller::fill_boiler_action
+    // };
 
-    State ready_state = {
-        state: STATES::READY,
-        transitions: {
-            {
-                next_state: STATES::FILL_BOILER,
-                condition: Controller::ready_to_fill_boiler
-            },
-            {
-                next_state: STATES::VERIN_UP,
-                condition: Controller::ready_to_verin_up
-            }
-            // ready_to_fill_boiler,
-            // ready_to_verin_up
-        },
-        action: &Controller::ready_action
-    };
+    State ready_state;
+    //  = {
+    //     state: STATES::READY,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::FILL_BOILER,
+    //             condition: &Controller::ready_to_fill_boiler
+    //         },
+    //         {
+    //             next_state: STATES::VERIN_UP,
+    //             condition: &Controller::ready_to_verin_up
+    //         }
+    //         // ready_to_fill_boiler,
+    //         // ready_to_verin_up
+    //     },
+    //     action: &Controller::ready_action
+    // };
 
-    State verin_up_state = {
-        state: STATES::VERIN_UP,
-        transitions: {
-            {
-                next_state: STATES::FILLING_HEAD,
-                condition: Controller::verin_up_to_fill_head
-            }
-            // verin_up_to_fill_head
-        },
-        action: &Controller::verin_up_action
-    };
+    State verin_up_state;
+    //  = {
+    //     state: STATES::VERIN_UP,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::FILLING_HEAD,
+    //             condition: &Controller::verin_up_to_fill_head
+    //         }
+    //         // verin_up_to_fill_head
+    //     },
+    //     action: &Controller::verin_up_action
+    // };
 
-    State filling_head_state = {
-        state: STATES::FILLING_HEAD,
-        transitions: {
-            {
-                next_state: STATES::EXTRACT,
-                condition: Controller::fill_head_to_extract
-            }
-            // fill_head_to_extract
-        },
-        action: &Controller::filling_head_action
-    };
+    State filling_head_state;
+    //  = {
+    //     state: STATES::FILLING_HEAD,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::EXTRACT,
+    //             condition: &Controller::fill_head_to_extract
+    //         }
+    //         // fill_head_to_extract
+    //     },
+    //     action: &Controller::filling_head_action
+    // };
 
-    State extract_state = {
-        state: STATES::EXTRACT,
-        transitions: {
-            {
-                next_state: STATES::DONE,
-                condition: Controller::extract_to_enjoy
-            },
-            {
-                next_state: STATES::CHOKE,
-                condition: Controller::extract_to_choke
-            }
-            // extract_to_enjoy,
-            // extract_to_choke
-        },
-        action: &Controller::extract_action
-    };
+    State extract_state;
+    //  = {
+    //     state: STATES::EXTRACT,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::DONE,
+    //             condition: &Controller::extract_to_enjoy
+    //         },
+    //         {
+    //             next_state: STATES::CHOKE,
+    //             condition: &Controller::extract_to_choke
+    //         }
+    //         // extract_to_enjoy,
+    //         // extract_to_choke
+    //     },
+    //     action: &Controller::extract_action
+    // };
 
-    State enjoy_state = {
-        state: STATES::DONE,
-        transitions: {
-            {
-                next_state: STATES::DRIPPING,
-                condition: Controller::enjoy_to_dripping
-            }
-            // enjoy_to_dripping
-        },
-        action: &Controller::done_action
-    };
+    State enjoy_state;
+    //  = {
+    //     state: STATES::DONE,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::DRIPPING,
+    //             condition: &Controller::enjoy_to_dripping
+    //         }
+    //         // enjoy_to_dripping
+    //     },
+    //     action: &Controller::done_action
+    // };
 
-    State choke_state = {
-        state: STATES::CHOKE,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: Controller::choke_to_ready
-            },
-            {
-                next_state: STATES::FLUSH,
-                condition: Controller::choke_to_flush
-            }
-            // choke_to_ready,
-            // choke_to_flush
-        },
-        action: &Controller::choke_action
-    };
+    State choke_state;
+    //  = {
+    //     state: STATES::CHOKE,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::READY,
+    //             condition: &Controller::choke_to_ready
+    //         },
+    //         {
+    //             next_state: STATES::FLUSH,
+    //             condition: &Controller::choke_to_flush
+    //         }
+    //         // choke_to_ready,
+    //         // choke_to_flush
+    //     },
+    //     action: &Controller::choke_action
+    // };
 
-    State dripping_state = {
-        state: STATES::DRIPPING,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: Controller::dripping_to_ready
-            },
-            {
-                next_state: STATES::FLUSH,
-                condition: Controller::dripping_to_flush
-            }
-            // dripping_to_ready,
-            // dripping_to_flush
-        },
-        action: &Controller::dripping_action
-    };
+    State dripping_state;
+    //  = {
+    //     state: STATES::DRIPPING,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::READY,
+    //             condition: &Controller::dripping_to_ready
+    //         },
+    //         {
+    //             next_state: STATES::FLUSH,
+    //             condition: &Controller::dripping_to_flush
+    //         }
+    //         // dripping_to_ready,
+    //         // dripping_to_flush
+    //     },
+    //     action: &Controller::dripping_action
+    // };
     
-    State flush_state = {
-        state: STATES::FLUSH,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: Controller::flush_to_ready
-            }
-            // flush_to_ready
-        },
-        action: &Controller::flush_action
-    };
+    State flush_state;
+    //  = {
+    //     state: STATES::FLUSH,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::READY,
+    //             condition: &Controller::flush_to_ready
+    //         }
+    //         // flush_to_ready
+    //     },
+    //     action: &Controller::flush_action
+    // };
 };

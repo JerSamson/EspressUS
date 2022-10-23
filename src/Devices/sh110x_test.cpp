@@ -1,11 +1,11 @@
 #include "./Devices/sh110x_test.h"
 
-sh110x_t::sh110x_t(int _sda, int _clk, gpio_num_t _alim_pin): sda(_sda), clk(_clk), alim(Gpio::GpioOutput(_alim_pin)){ 
+sh110x_t::sh110x_t(int _sda, int _clk, gpio_num_t _alim_pin, bool _initial_state): sda(_sda), clk(_clk), alim(Gpio::GpioOutput(_alim_pin)), initial_state(_initial_state){ 
 }
 
-esp_err_t sh110x_t::init(bool initial_state){
+esp_err_t sh110x_t::init(){
 
-  Serial.println("Initializing lcd...");
+  Serial.println("INFO - sh110x_t::init() - Initializing LCD...");
 
   esp_err_t status {ESP_OK};
 

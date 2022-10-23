@@ -46,6 +46,7 @@
         "typeinfo": "cpp",
         "iostream": "cpp",
         "random": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "string_view": "cpp"
     }
 }

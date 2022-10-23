@@ -53,6 +53,11 @@ void scan_for_I2C()
 }
 
 
+void demo_edika(){
+
+}
+
+
 void Main::run(void)
 {
   Serial.println("In main::run()...");
@@ -62,10 +67,36 @@ void Main::run(void)
     return;
   }
 
+
+  demo_edika();
+
+  // delay(5000);
+
+  // Serial.println("Setting SSR and 3 way ON");
+  // Devices.testSSR.set(true);
+  // delay(500);
+  // Devices.pump.send_command(125);
+
+  // delay(7000);
+
+  // Serial.println("Setting SSR and 3 way OF");
+
+
+  // Devices.pump.stop();
+  // delay(500);
+  // Devices.testSSR.set(false);
+
+  // Serial.println("OVER");
+
+  // delay(999999);
+
   // ==== Controller ==== 
   // controller.execute();
 
   // ==== LoadCell ==== 
+  // Devices.loadCell.zero();
+  // float l = Devices.loadCell.get_load();
+  // Serial.println(l);
   // Devices.loadCell.test_read();
 
   // ==== Thermocouple ==== 
@@ -86,42 +117,52 @@ esp_err_t Main::setup()
   Serial.println("===== Main Setup. =====");
 
   Devices = _Devices::getInstance();
+  status |= Devices.init();
 
-  _Configuration config = _Configuration::getInstance();
-  config.loadConfig(config_map.at(CONFIG::Default));
+  Serial.println("DEBUG - Main::setup() - Loading configuration");
+  // _Configuration& config = _Configuration::getInstance();
+  // config.loadConfig(config_map.at(CONFIG::Default));
 
   // ===== LoadCell ===== 
-  status |= Devices.loadCell.init();
-  if(ESP_OK != status){
-    Serial.println("ERROR - Main::Setup() - Loadcell setup failed.");
-    return status;
-  }
+  // status |= Devices.loadCell.init();
+  // if(ESP_OK != status){
+  //   Serial.println("ERROR - Main::Setup() - Loadcell setup failed.");
+  //   return status;
+  // }
 
-  Devices.loadCell.set(true);
+  // Devices.loadCell.set(true);
+  // Devices.loadCell.calibrate(451.9166584);
+  // Devices.loadCell.zero();
 
   // ===== Thermocouple ===== 
   // No init needed
 
   // ===== LCD ===== 
-  status |= Devices.lcd.init(true);
-  if(ESP_OK != status){
-    Serial.println("ERROR - Main::Setup() - LCD setup failed.");
-    return status;
-  }
+  // status |= Devices.lcd.init(true);
+  // if(ESP_OK != status){
+  //   Serial.println("ERROR - Main::Setup() - LCD setup failed.");
+  //   return status;
+  // }
 
   // ===== Pressure Sensor =====
-  status |= Devices.pressureSensor.init();
-  if(ESP_OK != status){
-    Serial.println("ERROR - Main::Setup() - Failed to init pressure sensor's adc.");
-    return status;
-  }
+  // status |= Devices.pressureSensor.init();
+  // if(ESP_OK != status){
+  //   Serial.println("ERROR - Main::Setup() - Failed to init pressure sensor's adc.");
+  //   return status;
+  // }
 
   // ===== Pump controller =====
-  status |= Devices.pump.init();
-  if(ESP_OK != status){
-    Serial.println("ERROR - Main::Setup() - Failed to init pump.");
-    return status;
-  }
+  // status |= Devices.pump.init();
+  // if(ESP_OK != status){
+  //   Serial.println("ERROR - Main::Setup() - Failed to init pump.");
+  //   return status;
+  // }
+
+  // status |= Devices.testSSR.init();
+  // if(ESP_OK != status){
+  //   Serial.println("ERROR - Main::Setup() - Failed to init SSR.");
+  //   return status;
+  // }
 
   controller.clear_history();
 

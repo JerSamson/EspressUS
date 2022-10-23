@@ -1,3 +1,5 @@
+#pragma once
+
 #include <map>
 #include <functional>
 #include "Arduino.h"
@@ -21,12 +23,20 @@ enum STATES{
 struct Transition
 {
     STATES next_state;
-    std::function<bool()> condition;
+    bool (* condition) ();
+    // std::function<bool()> condition;
 };
 
 struct State
 {
     STATES state;
     Transition transitions[5];
-    std::function<esp_err_t()> action;
+    esp_err_t (* action) ();
+    // esp_err_t(*action)();
+    // std::function<esp_err_t()> action;
 };
+
+// bool operator==(const State& lhs, const State& rhs)
+// {
+//     return lhs.state == rhs.state;
+// }

@@ -1,19 +1,25 @@
 #include "./Models/Controller.h"
 
-Controller::Controller(){
-    Devices = _Devices::getInstance();
-    Configuration = _Configuration::getInstance();
+_Devices& Controller::Devices = _Devices::getInstance();
+_Configuration& Controller::Configuration = _Configuration::getInstance();
 
+Controller::Controller(){
     clear_history();
 }
 
-State Controller::get_next_state() const{
+
+State Controller::get_next_state(){
     if(ESP_OK != status){
         return error_state;
     }
 
     for( unsigned int i = 0; i < sizeof(current_state.transitions)/sizeof(current_state.transitions[0]); i = i + 1 ){
-        if(current_state.transitions[i].condition()){
+        if(current_state.transitions[i].condition == nullptr){
+            Serial.println("ERROR - State Transition pointer is null!");
+            continue;;
+        }
+        if((*current_state.transitions[i].condition)()){
+            Serial.print("Changing state to:");
             return state_map.at(current_state.transitions[i].next_state);
         }
     }
@@ -22,16 +28,36 @@ State Controller::get_next_state() const{
 }
 
 esp_err_t Controller::execute(){
-    if(!Configuration.is_valid()){
-        Serial.println("ERROR - Controller::execute - Invalid configuration.");
-        status = ESP_ERR_INVALID_STATE;
-        return status;
+    // if(!Configuration.is_valid()){
+    //     Serial.println("ERROR - Controller::execute - Invalid configuration.");
+    //     status = ESP_ERR_INVALID_STATE;
+    //     return status;
+    // }
+
+    Serial.println("In execute()...");
+
+    // if(ESP_OK == status){
+    if(first_loop){
+        Serial.println("First execute loop, executing state action...");
+
+        if(current_state.action == nullptr){
+            Serial.println("ERROR - State Action pointer is null!");
+            return ESP_FAIL;
+        }
+
+        status |= (*current_state.action)();
+        // status |= current_state.action();
+        // status |= std::__invoke(current_state.action);
+        first_loop = false;
     }
 
-    if(ESP_OK == status){
-        status |= current_state.action();
-        current_state = get_next_state();
+    State last_state = current_state;
+    current_state = get_next_state();
+
+    if(last_state.state != current_state.state){
+        first_loop = true;
     }
+    // }
 
     return status;
 }
@@ -211,20 +237,402 @@ void Controller::clear_history(){
     Serial.println("CONTROLLER - Data history cleared.");
 }
 
+// ================== STATES ==================
+
+esp_err_t test(){
+    Serial.print("GOFUCKYOURSELF");
+    return ESP_OK;
+}
+
+void Controller::initialize_states(Controller* C){
+
+    // error_state = {
+    //     state: STATES::ERROR,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::IDLE,
+    //             condition: &Controller::error_to_idle
+    //         }
+    //     },
+    //     action: &Controller::error_action
+    // };
+
+    // idle_state = {
+    //     state: STATES::IDLE,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::INIT,
+    //             condition: &Controller::idle_to_init
+    //         }
+    //     },
+    //     action: &test
+    // };    
+
+    // init_state = {
+    //     state: STATES::INIT,
+    //     transitions: {
+    //         {
+    //             next_state: STATES::HEATING,
+    //             condition: &Controller::init_to_heating
+    //         }
+    //     },
+    //     action: &Controller::init_action
+    // };
+
+    heating_state = {
+        state: STATES::HEATING,
+        transitions: {
+            {
+                next_state: STATES::READY,
+                condition: &Controller::heating_to_ready
+            },
+            {
+                next_state: STATES::FILL_BOILER,
+                condition: &Controller::heating_to_fill_boiler
+            }
+        },
+        action: &Controller::heating_action
+    };
+
+    fill_boiler_state = {
+        state: STATES::FILL_BOILER,
+        transitions: {
+            {
+                next_state: STATES::HEATING,
+                condition: &Controller::fill_boiler_to_heating
+            }
+        },
+        action: &Controller::fill_boiler_action
+    };
+
+    ready_state = {
+        state: STATES::READY,
+        transitions: {
+            {
+                next_state: STATES::FILL_BOILER,
+                condition: &Controller::ready_to_fill_boiler
+            },
+            {
+                next_state: STATES::VERIN_UP,
+                condition: &Controller::ready_to_verin_up
+            }
+            // ready_to_fill_boiler,
+            // ready_to_verin_up
+        },
+        action: &Controller::ready_action
+    };
+
+    verin_up_state = {
+        state: STATES::VERIN_UP,
+        transitions: {
+            {
+                next_state: STATES::FILLING_HEAD,
+                condition: &Controller::verin_up_to_fill_head
+            }
+            // verin_up_to_fill_head
+        },
+        action: &Controller::verin_up_action
+    };
+
+    filling_head_state = {
+        state: STATES::FILLING_HEAD,
+        transitions: {
+            {
+                next_state: STATES::EXTRACT,
+                condition: &Controller::fill_head_to_extract
+            }
+            // fill_head_to_extract
+        },
+        action: &Controller::filling_head_action
+    };
+
+    extract_state = {
+        state: STATES::EXTRACT,
+        transitions: {
+            {
+                next_state: STATES::DONE,
+                condition: &Controller::extract_to_enjoy
+            },
+            {
+                next_state: STATES::CHOKE,
+                condition: &Controller::extract_to_choke
+            }
+            // extract_to_enjoy,
+            // extract_to_choke
+        },
+        action: &Controller::extract_action
+    };
+
+    enjoy_state = {
+        state: STATES::DONE,
+        transitions: {
+            {
+                next_state: STATES::DRIPPING,
+                condition: &Controller::enjoy_to_dripping
+            }
+            // enjoy_to_dripping
+        },
+        action: &Controller::done_action
+    };
+
+    choke_state = {
+        state: STATES::CHOKE,
+        transitions: {
+            {
+                next_state: STATES::READY,
+                condition: &Controller::choke_to_ready
+            },
+            {
+                next_state: STATES::FLUSH,
+                condition: &Controller::choke_to_flush
+            }
+            // choke_to_ready,
+            // choke_to_flush
+        },
+        action: &Controller::choke_action
+    };
+
+    dripping_state = {
+        state: STATES::DRIPPING,
+        transitions: {
+            {
+                next_state: STATES::READY,
+                condition: &Controller::dripping_to_ready
+            },
+            {
+                next_state: STATES::FLUSH,
+                condition: &Controller::dripping_to_flush
+            }
+            // dripping_to_ready,
+            // dripping_to_flush
+        },
+        action: &Controller::dripping_action
+    };
+
+    flush_state = {
+        state: STATES::FLUSH,
+        transitions: {
+            {
+                next_state: STATES::READY,
+                condition: &Controller::flush_to_ready
+            }
+            // flush_to_ready
+        },
+        action: &Controller::flush_action
+    };
+
+};
+
+// State error_state = {
+//     state: STATES::ERROR,
+//     transitions: {
+//         {
+//             next_state: STATES::INIT,
+//             condition: &Controller::error_to_idle
+//         }
+//     },
+//     action: &Controller::error_action
+// };
+
+// State idle_state = {
+//     state: STATES::IDLE,
+//     transitions: {
+//         {
+//             next_state: STATES::INIT,
+//             condition: &Controller::idle_to_init
+//         }
+//     },
+//     action: &Controller::idle_action
+// };
+
+// State init_state = {
+//     state: STATES::INIT,
+//     transitions: {
+//         {
+//             next_state: STATES::HEATING,
+//             condition: &Controller::init_to_heating
+//         }
+//     },
+//     action: &Controller::init_action
+// };
+
+// State heating_state = {
+//     state: STATES::HEATING,
+//     transitions: {
+//         {
+//             next_state: STATES::READY,
+//             condition: &Controller::heating_to_ready
+//         },
+//         {
+//             next_state: STATES::FILL_BOILER,
+//             condition: &Controller::heating_to_fill_boiler
+//         }
+//     },
+//     action: &Controller::heating_action
+// };
+
+// State fill_boiler_state = {
+//     state: STATES::FILL_BOILER,
+//     transitions: {
+//         {
+//             next_state: STATES::HEATING,
+//             condition: &Controller::fill_boiler_to_heating
+//         }
+//     },
+//     action: &Controller::fill_boiler_action
+// };
+
+// State ready_state = {
+//     state: STATES::READY,
+//     transitions: {
+//         {
+//             next_state: STATES::FILL_BOILER,
+//             condition: &Controller::ready_to_fill_boiler
+//         },
+//         {
+//             next_state: STATES::VERIN_UP,
+//             condition: &Controller::ready_to_verin_up
+//         }
+//         // ready_to_fill_boiler,
+//         // ready_to_verin_up
+//     },
+//     action: &Controller::ready_action
+// };
+
+// State verin_up_state = {
+//     state: STATES::VERIN_UP,
+//     transitions: {
+//         {
+//             next_state: STATES::FILLING_HEAD,
+//             condition: &Controller::verin_up_to_fill_head
+//         }
+//         // verin_up_to_fill_head
+//     },
+//     action: &Controller::verin_up_action
+// };
+
+// State filling_head_state = {
+//     state: STATES::FILLING_HEAD,
+//     transitions: {
+//         {
+//             next_state: STATES::EXTRACT,
+//             condition: &Controller::fill_head_to_extract
+//         }
+//         // fill_head_to_extract
+//     },
+//     action: &Controller::filling_head_action
+// };
+
+// State extract_state = {
+//     state: STATES::EXTRACT,
+//     transitions: {
+//         {
+//             next_state: STATES::DONE,
+//             condition: &Controller::extract_to_enjoy
+//         },
+//         {
+//             next_state: STATES::CHOKE,
+//             condition: &Controller::extract_to_choke
+//         }
+//         // extract_to_enjoy,
+//         // extract_to_choke
+//     },
+//     action: &Controller::extract_action
+// };
+
+// State enjoy_state = {
+//     state: STATES::DONE,
+//     transitions: {
+//         {
+//             next_state: STATES::DRIPPING,
+//             condition: &Controller::enjoy_to_dripping
+//         }
+//         // enjoy_to_dripping
+//     },
+//     action: &Controller::done_action
+// };
+
+// State choke_state = {
+//     state: STATES::CHOKE,
+//     transitions: {
+//         {
+//             next_state: STATES::READY,
+//             condition: &Controller::choke_to_ready
+//         },
+//         {
+//             next_state: STATES::FLUSH,
+//             condition: &Controller::choke_to_flush
+//         }
+//         // choke_to_ready,
+//         // choke_to_flush
+//     },
+//     action: &Controller::choke_action
+// };
+
+// State dripping_state = {
+//     state: STATES::DRIPPING,
+//     transitions: {
+//         {
+//             next_state: STATES::READY,
+//             condition: &Controller::dripping_to_ready
+//         },
+//         {
+//             next_state: STATES::FLUSH,
+//             condition: &Controller::dripping_to_flush
+//         }
+//         // dripping_to_ready,
+//         // dripping_to_flush
+//     },
+//     action: &Controller::dripping_action
+// };
+
+// State flush_state = {
+//     state: STATES::FLUSH,
+//     transitions: {
+//         {
+//             next_state: STATES::READY,
+//             condition: &Controller::flush_to_ready
+//         }
+//         // flush_to_ready
+//     },
+//     action: &Controller::flush_action
+// };
+
 // ================== ACTIONS ==================
 
     esp_err_t Controller::idle_action(){
-        Devices.lcd.display_text("IDLE");
+        Serial.println("Idle action");
+        // Devices.lcd.display_text("IDLE");
+        // Serial.println("Setting SSR and 3 way ON");
+        // Devices.testSSR.set(true);
+        // delay(500);
+        // Devices.pump.send_command(125);
+
         return ESP_OK;  
     }
     
     esp_err_t Controller::init_action(){
-        Devices.lcd.display_text("INIT");
+        // Devices.lcd.display_text("INIT");
+
+        Serial.println("Init Action");
+
+        // Serial.println("Setting SSR and 3 way OF");
+
+
+        // Devices.pump.stop();
+        // delay(500);
+        // Devices.testSSR.set(false);
+
+        // Serial.println("OVER");
+
         return ESP_OK;  
     }
     
     esp_err_t Controller::heating_action(){
         Devices.lcd.display_text("HEATING");
+
+        // Activate boiler SSR
+
         return ESP_OK;  
     }
     
@@ -284,7 +692,11 @@ void Controller::clear_history(){
     bool Controller::idle_to_init(){
         // Water level check
         // Load cell memory is not full?
-        return false;
+        float load =  Devices.loadCell.get_load();
+        Serial.printf("Load:%f \n", load);
+        return load > 50;
+
+        // return false;
     }
 
     bool Controller::init_to_heating(){
@@ -294,7 +706,6 @@ void Controller::clear_history(){
 
     bool Controller::heating_to_ready(){
         return Devices.thermocouple.get_temp() >= Configuration.target_temp;
-        return false;
     }
 
     bool Controller::heating_to_fill_boiler(){

@@ -1,3 +1,8 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
 {
     "configurations": [
         {
@@ -11,8 +16,11 @@
                 "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/lib/MAX31855K/src",
-                "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                 "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/lib/HX711/src",
+                "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
+                "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
+                "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
+                "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/lib/ArduinoJson/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/config",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/app_trace",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/app_update",
@@ -88,13 +96,11 @@
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/ESP32/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/ESPmDNS/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/FFat/src",
-                "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/NetBIOS/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
-                "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SimpleBLE/src",
@@ -104,8 +110,7 @@
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
                 "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/WiFiProv/src",
-                "",
-                "${workspaceFolder}/lib/ArduinoJson/src"
+                ""
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
@@ -118,8 +123,11 @@
                     "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/lib/MAX31855K/src",
-                    "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                     "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/lib/HX711/src",
+                    "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
+                    "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
+                    "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
+                    "c:/Users/Jeremy/Documents/GithubProjects/EspressUS_PIO/lib/ArduinoJson/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/config",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/app_trace",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/app_update",
@@ -195,13 +203,11 @@
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/ESP32/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/ESPmDNS/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/FFat/src",
-                    "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdate/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/HTTPUpdateServer/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/NetBIOS/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/Preferences/src",
-                    "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SD/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SD_MMC/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src",
                     "C:/Users/Jeremy/.platformio/packages/framework-arduinoespressif32/libraries/SimpleBLE/src",

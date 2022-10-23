@@ -1,21 +1,12 @@
 #pragma once
 
 #include "Arduino.h"
+#include "DeviceBase.h"
 #include "./Models/Gpio/gpio.h"
 
-class Pump{
-
-    public:
-    Pump(int _dir_pin, int _pwm_pin);
-
-    esp_err_t init();
-    esp_err_t send_command(int dutyCycle);
-    esp_err_t stop();
-
-    bool is_init(){ return init_success; }
-
+class Pump: public DeviceBase{
     private:
-    bool init_success = false;
+    // bool init_success = false;
 
     Gpio::GpioOutput dir_pin;
     Gpio::GpioOutput pwm_pin;
@@ -25,4 +16,16 @@ class Pump{
     const int freq = 10000;
     const int pwm_channel = 0;
     const int resolution = 8;
+
+    public:
+    virtual esp_err_t init();
+
+    Pump(int _dir_pin, int _pwm_pin);
+
+    esp_err_t send_command(int dutyCycle);
+    esp_err_t stop();
+
+    // bool is_init(){ return init_success; }
+
+
 };

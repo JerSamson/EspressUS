@@ -6,9 +6,6 @@ char _Configuration::config_name[] = "Default";
 void _Configuration::loadConfig(const char *filename) {
     File file = SD.open(filename);
 
-    // Allocate a temporary JsonDocument
-    // Don't forget to change the capacity to match your requirements.
-    // Use https://arduinojson.org/v6/assistant to compute the capacity.
     StaticJsonDocument<512> doc;
 
     // Deserialize the JSON document

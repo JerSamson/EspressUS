@@ -2,6 +2,8 @@
 #include "./main.h"
 #include <ESP32CAN.h>
 #include <CAN_config.h>
+#include <iostream>
+#include <iomanip>
 
 CAN_device_t CAN_cfg;
 
@@ -19,10 +21,12 @@ void loop() {
   vTaskDelay(pdSECOND);
 }
 
+
 void Main::run(void)
 {
   Serial.print("In main::run()...\n");
-
+  
+  CAN_frame_t rx_frame;
   // CAN Bus
   startMillis = millis();
   Serial.println("Wake UP");
@@ -34,19 +38,60 @@ void Main::run(void)
 
   startMillis = millis();
   Serial.println("Position #1");
-  while(millis() - startMillis < 5000) {
-    can_t.send_CAN(100.0, 3.2, 80.0, 0, 1);
+  while(millis() - startMillis < 25000) {
+    can_t.send_CAN(112.0, 1.5, 30.0, 0, 1);
     ESP32Can.CANWriteFrame(&can_t.send_frame);
+    if(xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3*portTICK_PERIOD_MS)==pdTRUE)
+    //do stuff!
+      if(rx_frame.FIR.B.FF==CAN_frame_std)
+        printf("JMONTE OSTI LOOOOL");
+      else
+        printf("New extended frame");
+
+      if(rx_frame.FIR.B.RTR==CAN_RTR)
+        printf(" RTR from 0x%08x, DLC %d\r\n",rx_frame.MsgID,  rx_frame.FIR.B.DLC);
+      else{
+        printf(" from 0x%08x, DLC %d\n",rx_frame.MsgID,  rx_frame.FIR.B.DLC);
+        for(int i = 0; i < 8; i++){
+          std::cout << std::hex << std::setfill('0') << std::setw(2) << +rx_frame.data.u8[i] << std::endl;
+        }
+        printf("\n");
+      }
     delay(100);
   };
 
+  // startMillis = millis();
+  // Serial.println("Position #2");
+  // while(millis() - startMillis < 12000) {
+  //   can_t.send_CAN(30.0, 1.5, 50.0, 0, 1);
+  //   ESP32Can.CANWriteFrame(&can_t.send_frame);
+  //   delay(100);
+  // };
+
   startMillis = millis();
   Serial.println("Position #2");
-  while(millis() - startMillis < 5000) {
-    can_t.send_CAN(20.0, 3.2, 80.0, 0, 1);
+  while(millis() - startMillis < 30000) {
+    can_t.send_CAN(0.0, 1.5, 20.0, 0, 1);
     ESP32Can.CANWriteFrame(&can_t.send_frame);
+    //receive next CAN frame from queue
+    if(xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3*portTICK_PERIOD_MS)==pdTRUE)
+    //do stuff!
+      if(rx_frame.FIR.B.FF==CAN_frame_std)
+        printf("PI LO JDESCENDS");
+      else
+        printf("New extended frame");
+
+      if(rx_frame.FIR.B.RTR==CAN_RTR)
+        printf(" RTR from 0x%08x, DLC %d\r\n",rx_frame.MsgID,  rx_frame.FIR.B.DLC);
+      else{
+        printf(" from 0x%08x, DLC %d\n",rx_frame.MsgID,  rx_frame.FIR.B.DLC);
+        for(int i = 0; i < 8; i++){
+          std::cout << std::hex << std::setfill('0') << std::setw(2) << +rx_frame.data.u8[i] << std::endl;
+        }
+        printf("\n");
+      }
+    };
     delay(100);
-  };
 }
 
 esp_err_t Main::setup()

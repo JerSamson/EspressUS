@@ -7,6 +7,7 @@
 #include "./Devices/pressureSensor.h"
 #include "./Devices/pump.h"
 #include "./Devices/SSR.h"
+#include "./Devices/VerinCan.h"
 
 // LCD
 #define LCD_ALIM_PIN GPIO_NUM_13
@@ -24,6 +25,10 @@
 #define THERMO_SCK_PIN 18
 #define THERMO_MISO_PIN 19
 
+// Verin
+#define VERIN_CAN_RX GPIO_NUM_4
+#define VERIN_CAN_TX GPIO_NUM_5
+
 // Pressure Sensor
 // ADC/Channel pairs : https://www.electronicshub.org/esp32-adc-tutorial/#:~:text=So%2C%20by%20default%2C%20the%20output,of%200V%20to%203.3V.
 #define PRESSURESENSOR_ADC GPIO_NUM_32
@@ -33,7 +38,7 @@
 
 // Pump controller
 #define PUMP_DIR_PIN 26
-#define PUMP_PWM_PIN 14
+#define PUMP_PWM_PIN 15
 
 // SSR TEST
 #define SSR_TEST_PIN GPIO_NUM_23 
@@ -60,6 +65,7 @@ class _Devices: public DeviceBase{
     static pressureSensor_t pressureSensor;
     static Pump pump;
     static SSR testSSR;
+    static VerinCan verin;
 
     private:
     static DeviceBase* init_list[];

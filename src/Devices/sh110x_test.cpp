@@ -41,11 +41,11 @@ void sh110x_t::display_logo(){
   display.begin(0x3C, false);  // initialize with the I2C addr 0x3D (for the 128x64)
   display.clearDisplay();
 
-  display.drawBitmap(0, 0, troll, 128, 64, 1);
-//   display.drawBitmap(0, 0, logo_espressus_bmp, 128, 64, 1);
+  // display.drawBitmap(0, 0, troll, 128, 64, 1);
+  display.drawBitmap(0, 0, logo_espressus_bmp, 128, 64, 1);
   display.display();
 
-  delay(2000);
+  // delay(2000);
 
 }
 

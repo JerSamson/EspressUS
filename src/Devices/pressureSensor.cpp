@@ -16,8 +16,9 @@ float pressureSensor_t::get_pressure(){
     int raw_data = adc.get_raw();
     float voltage = adc.raw_to_voltage(raw_data);
     float pressure = adc.voltage_to_pressure(voltage);
+    float pressure_bar = pressure/14.5;
 
-    Serial.printf("PRESSURE SENSOR - Raw: %d\t Voltage: %2fV\tpressure: %2fPSI\n", raw_data, voltage, pressure);
+    Serial.printf("PRESSURE SENSOR - Raw: %d\t Voltage: %2fV\tpressure: %2fPSI\tBar:%2f\n", raw_data, voltage, pressure, pressure_bar);
 
-    return pressure;
+    return pressure_bar;
 }

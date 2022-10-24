@@ -6,6 +6,7 @@ max31855k_t      _Devices::thermocouple   = max31855k_t(THERMO_VCC, THERMO_SCK_P
 sh110x_t         _Devices::lcd            = sh110x_t(LCD_SDA_PIN, LCD_CLK_PIN, LCD_ALIM_PIN);
 Pump             _Devices::pump           = Pump(PUMP_DIR_PIN, PUMP_PWM_PIN);
 SSR              _Devices::testSSR        = SSR(SSR_TEST_PIN);
+VerinCan         _Devices::verin          = VerinCan(VERIN_CAN_RX, VERIN_CAN_TX);
 
 DeviceBase* _Devices::init_list[10]  = {
         &loadCell,
@@ -13,7 +14,8 @@ DeviceBase* _Devices::init_list[10]  = {
         &lcd,
         &pressureSensor,
         &pump,
-        &testSSR
+        &testSSR,
+        &verin
     };
 
 esp_err_t _Devices::init(){

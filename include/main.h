@@ -23,7 +23,7 @@ private:
     bool setup_success = false;
 public:
     esp_err_t setup(void);
-
+    void demo_edika();
     void run(void);
 
     _Devices& Devices = _Devices::getInstance();

@@ -53,9 +53,166 @@ void scan_for_I2C()
 }
 
 
-void demo_edika(){
+void Main::demo_edika(){
 
+  Devices.lcd.display_logo();
+
+  Serial.println("3...");
+  delay(1000);
+  Serial.println("2...");
+  delay(1000);
+  Serial.println("1...");
+  delay(1000);
+  Serial.println("Here we go!");
+
+  // Verin Up
+  Devices.verin.wake_up();
+
+  uint8_t ms = millis();
+  while(millis() - ms < 20000){
+    Serial.println("Rising...");
+    Devices.verin.send_CAN(112.0f);
+    delay(100);
+  }
+  Serial.println("Verin raised!");
+
+  Serial.println("Please insert porte-filter");
+  delay(7500);
+
+  // 3 way valve open (SSR)
+  Serial.println("Opening 3 way valve...");
+  Devices.testSSR.set(true);
+
+
+  // Pump x secondes
+  Serial.println("Sending pump command...");
+  Devices.pump.send_command(150);
+  delay(7250);
+  Devices.pump.send_command(30);
+
+
+  Serial.println("Lowering verin...");
+  Devices.verin.wake_up();
+
+  long lowering_start = millis();
+  long now = lowering_start;
+
+  // Verin Down / SSR OFF
+  while(now - lowering_start < 25000){
+    Devices.verin.send_CAN(0.0f);
+    
+    if(now - lowering_start < 800 && Devices.testSSR.get_state() == true){
+      Serial.println("Shutting 3 way valve and pump");
+      Devices.testSSR.set(false);
+      Devices.pump.stop();
+    }
+
+    now = millis();
+    delay(100);
+  }
+
+  // Verin up a bit
+  long lowering_end = millis();
+  now = lowering_end;
+  Serial.println("Rising the verin a bit...");
+  while(now - lowering_end < 2000){
+  
+    Devices.verin.send_CAN(5.0f);
+    
+    now = millis();
+
+    delay(100);
+  }
+
+  Serial.println("Execution done.");
+  delay(900000);
 }
+
+// BACKUP
+// Serial.println("3...");
+//   delay(800);
+//   Serial.println("2...");
+//   delay(800);
+//   Serial.println("1...");
+//   delay(800);
+//   Serial.println("0!!!!!!!!!!!!!!!!!!!!!");
+
+//   // Verin Up
+//   Serial.println("PUTTING THE VERIN UP");
+
+//   Devices.verin.wake_up();
+
+//   uint8_t ms = millis();
+//   while(millis() - ms < 20000){
+//     Serial.println("COCK");
+//     Devices.verin.send_CAN(112.0f);
+//     delay(100);
+//   }
+//   Serial.println("SUCKER!");
+
+//   delay(7500);
+
+//   // 3 way valve open (SSR)
+//   Serial.println("OPENING LA VALVE 3 FACONS");
+
+//   Devices.testSSR.set(true);
+
+//   // Pump x secondes
+//   Serial.println("PUMP PUMP PUMP PUMP PIUMP PUMP PUMP PUMP");
+
+//   Devices.pump.send_command(150);
+//   delay(8000);
+//   // Devices.pump.stop();
+
+//   // delay(100);
+
+//   Devices.pump.send_command(30);
+
+//   // Devices.pump.send_command(62.5);
+//   // delay(2500);
+//   // Devices.pump.stop();
+
+//   // Verin Down / SSR OFF
+//   Serial.println("VERIN DOWN WATCH OUT");
+
+//   Devices.verin.wake_up();
+
+//   // uint8_t ms2 = millis();
+//   int i = 0;
+//   while(true){
+//     // Serial.printf("Pressure: %f Bar\n", Devices.pressureSensor.get_pressure());
+
+//     Devices.verin.send_CAN(0.0f);
+
+//     if(i > 8 && Devices.testSSR.get_state() == true){
+
+//       Serial.println("SHUTTING OFF THE VALVE 3 FACONS");
+//       Devices.testSSR.set(false);
+//       Devices.pump.stop();
+
+//     }
+
+//     if(i++ > 200)
+//       break;
+
+//     delay(100);
+//   }
+
+
+//   i = 0;
+//   while(true){
+//     // Serial.printf("Pressure: %f Bar\n", Devices.pressureSensor.get_pressure());
+
+//     Devices.verin.send_CAN(5.0f);
+
+//     if(i++ > 20)
+//       break;
+
+//     delay(100);
+//   }
+
+//   Serial.println("THE END.");
+//   delay(100000);
 
 
 void Main::run(void)

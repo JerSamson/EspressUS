@@ -24,7 +24,7 @@ esp_err_t hx711_t::init(){
     }
 
     // Init scale
-    rtc_clk_cpu_freq_set(RTC_CPU_FREQ_80M);
+    // rtc_clk_cpu_freq_set(RTC_CPU_FREQ_80M);
     scale.begin(dout, sck);
 
     init_success = true;

@@ -30,7 +30,7 @@ esp_err_t VerinCan::wake_up(){
     return status;
 }
 
-esp_err_t VerinCan::send_CAN(float targetPos, float currentLim, float dutyCycle, int mvtProfile, bool allowMvt){
+esp_err_t VerinCan::send_CAN(float targetPos, float dutyCycle, float currentLim,  int mvtProfile, bool allowMvt){
     if(targetPos > 112 || targetPos < 0){
         Serial.println("Warning - VerinCAN::to_CAN - Invalid target position");
         return ESP_FAIL;
@@ -48,6 +48,15 @@ esp_err_t VerinCan::send_CAN(float targetPos, float currentLim, float dutyCycle,
     ESP32Can.CANWriteFrame(&send_frame);
 
     return status;
+}
+
+int VerinCan::receive_CAN(CAN_frame_t rx_frame){
+    if(xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3*portTICK_PERIOD_MS)==pdTRUE){
+        // return rx_frame.data.u8[0] | rx_frame.data.u8[1] << 8;
+        return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
+    }else{
+        return -1;
+    }
 }
 
 VerinCan::VerinCan(gpio_num_t rx, gpio_num_t tx){

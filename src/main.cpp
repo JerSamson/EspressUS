@@ -55,7 +55,7 @@ void scan_for_I2C()
 
 void Main::demo_edika(){
 
-  Devices.lcd.display_logo();
+  // Devices.lcd.display_logo();
 
   Serial.println("3...");
   delay(1000);
@@ -66,52 +66,92 @@ void Main::demo_edika(){
   Serial.println("Here we go!");
 
   // Verin Up
+  CAN_frame_t rx_frame;
   Devices.verin.wake_up();
+  delay(250);
 
+  int pos;
   uint8_t ms = millis();
-  while(millis() - ms < 20000){
-    Serial.println("Rising...");
-    Devices.verin.send_CAN(112.0f);
-    delay(100);
+  while(true){
+    if(millis() - ms > 1200){
+      Serial.println("Rising...");
+      Devices.verin.send_CAN(112.0f);
+      ms = millis();
+      Devices.pressureSensor.get_pressure();
+    }
+    pos = Devices.verin.receive_CAN(rx_frame);
+    if(pos >= 0x0456){
+      delay(200);
+      break;
+    }
   }
   Serial.println("Verin raised!");
-
-  Serial.println("Please insert porte-filter");
-  delay(7500);
-
+  delay(10000);
   // 3 way valve open (SSR)
   Serial.println("Opening 3 way valve...");
   Devices.testSSR.set(true);
 
-
   // Pump x secondes
   Serial.println("Sending pump command...");
-  Devices.pump.send_command(150);
-  delay(7250);
+  Devices.pump.send_command(200);
+  delay(4200);
+  // Devices.testSSR.set(false);
+  // Devices.pump.stop();
   Devices.pump.send_command(30);
-
 
   Serial.println("Lowering verin...");
   Devices.verin.wake_up();
 
   long lowering_start = millis();
   long now = lowering_start;
+  double last_powaaa = 0.0f;
+  double powaaa = 60.0f;
+  int on = true;
 
-  // Verin Down / SSR OFF
-  while(now - lowering_start < 25000){
-    Devices.verin.send_CAN(0.0f);
-    
-    if(now - lowering_start < 800 && Devices.testSSR.get_state() == true){
-      Serial.println("Shutting 3 way valve and pump");
-      Devices.testSSR.set(false);
-      Devices.pump.stop();
+  while(true){
+    if(millis() - lowering_start > 1200 || last_powaaa != powaaa){
+      if(Devices.testSSR.get_state() == true){
+        Serial.println("Shutting 3 way valve and pump");
+        Devices.testSSR.set(false);
+        Devices.pump.stop();
+      }
+      Devices.verin.send_CAN(0.0f, powaaa, 3.5, 0, on);
+      last_powaaa = powaaa;
+      lowering_start = millis();
     }
-
-    now = millis();
-    delay(100);
+    pos = Devices.verin.receive_CAN(rx_frame);
+    if(Devices.pressureSensor.get_pressure() == 0.0){
+      powaaa = 90.0f;
+    }else if(Devices.pressureSensor.get_pressure() < 4.0){
+      powaaa = 75.0f;
+    }else if(Devices.pressureSensor.get_pressure() < 6.0){
+      powaaa = 60.0f;
+    }else if(Devices.pressureSensor.get_pressure() < 8.0){
+      powaaa = 40.0f;
+    }else if(Devices.pressureSensor.get_pressure() < 9.0){
+      powaaa = 20.0f;
+    }else if(Devices.pressureSensor.get_pressure() > 10.0){
+      on = 0;
+      powaaa = 20.0f;
+    }
+    if(pos != -1 && pos <= 0x0001){
+      Serial.println("U r done bro");
+      break;
+    }
+    // if(pos != -1){
+    //   if(pos <= 0x02BC && pos > 0x00C8){
+    //     printf("powa 40 Current pos: %d\n", pos);
+    //     powaaa = 40.0f;
+    //   }else if(pos <= 0x00C8 && pos > 0x0001){
+    //     printf("powa 20 Current pos: %d\n", pos);
+    //     powaaa = 20.0f;
+    //   }else if(pos <= 0x0001){
+    //     Serial.println("U r done bro");
+    //     break;
+    //   }
+    // }
   }
 
-  // Verin up a bit
   long lowering_end = millis();
   now = lowering_end;
   Serial.println("Rising the verin a bit...");
@@ -217,13 +257,12 @@ void Main::demo_edika(){
 
 void Main::run(void)
 {
-  Serial.println("In main::run()...");
+  // Serial.println("In main::run()...");
 
   if(!setup_success){
     Serial.println("WARNING - Cannot run main loop since main::setup() has not succeeded yet.");
     return;
   }
-
 
   demo_edika();
 

@@ -20,7 +20,8 @@ esp_err_t setup_frame_CAN();
 
 esp_err_t wake_up();
 // 1.5, 30.0, 0, 1
-esp_err_t send_CAN(float targetPos, float currentLim=3.0, float dutyCycle=30.0, int mvtProfile=0, bool allowMvt=1);
+esp_err_t send_CAN(float targetPos, float dutyCycle=30.0, float currentLim=3.0, int mvtProfile=0, bool allowMvt=1);
+int receive_CAN(CAN_frame_t rx_frame);
 
 VerinCan(gpio_num_t rx, gpio_num_t tx);
 

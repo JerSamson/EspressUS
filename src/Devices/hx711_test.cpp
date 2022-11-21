@@ -9,13 +9,12 @@ hx711_t::hx711_t(uint8_t _dout, uint8_t _sck, gpio_num_t _alim_pin) : dout(_dout
 
 esp_err_t hx711_t::init(){
     Serial.println("INFO - hx711_t::init() - Initializing load cell...");
-    // Serial.begin(115200);
 
     esp_err_t status {ESP_OK};
 
     //Init Alimentation Gpio
     status |= alim.init();
-    status |= alim.set(false);
+    status |= alim.set(true);
 
     if(ESP_OK != status){
       Serial.println("ERROR - hx711_t::init() - Could not initialize loadCell's alimentation gpio.");

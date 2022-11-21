@@ -3,9 +3,7 @@
 CAN_device_t CAN_cfg;
 
 esp_err_t VerinCan::init(){
-
     esp_err_t status{ESP_OK};
-
     Serial.println("Initializing CANOpen comm");
 
     //initialize CAN Module
@@ -14,9 +12,7 @@ esp_err_t VerinCan::init(){
     }
 
     setup_frame_CAN();
-    
     init_success = status == ESP_OK;
-
     return status;
 }
 
@@ -25,12 +21,13 @@ esp_err_t VerinCan::wake_up(){
 
     Serial.println("INFO - VerinCan::Wake_up() - Waking up the verin");
     status |= ESP32Can.CANWriteFrame(&wake_frame);
+
     delay(100);
     
     return status;
 }
 
-esp_err_t VerinCan::send_CAN(float targetPos, float currentLim, float dutyCycle, int mvtProfile, bool allowMvt){
+esp_err_t VerinCan::send_CAN(float targetPos, float dutyCycle, float currentLim,  int mvtProfile, bool allowMvt){
     if(targetPos > 112 || targetPos < 0){
         Serial.println("Warning - VerinCAN::to_CAN - Invalid target position");
         return ESP_FAIL;
@@ -38,23 +35,42 @@ esp_err_t VerinCan::send_CAN(float targetPos, float currentLim, float dutyCycle,
 
     esp_err_t status{ESP_OK};
 
-    // if(millis() - last_msg_ms >= 5000){
-    //     Serial.println("WAKE UP");
-    //     wake_up();
-    // }
-    // last_msg_ms = millis();
-
     status |= to_CAN(targetPos, currentLim, dutyCycle, mvtProfile, allowMvt);
     ESP32Can.CANWriteFrame(&send_frame);
 
     return status;
 }
 
+int VerinCan::receive_CAN(CAN_frame_t rx_frame, controlParam option){
+    if(xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3*portTICK_PERIOD_MS)==pdTRUE){
+        switch(option){
+            case position:
+                return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
+                break;
+            case vitesse:
+                return (rx_frame.data.u8[5] << 8) + rx_frame.data.u8[4];
+                break;
+            case courant:
+                return (rx_frame.data.u8[3] << 8) + rx_frame.data.u8[2];
+                break;
+            default:
+                return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
+                break;
+        }
+        // return rx_frame.data.u8[0] | rx_frame.data.u8[1] << 8;
+        // return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
+    }else{
+        return -1;
+    }
+}
+
 VerinCan::VerinCan(gpio_num_t rx, gpio_num_t tx){
     CAN_cfg.tx_pin_id = tx;
     CAN_cfg.rx_pin_id = rx;
+
     // start the CAN bus at 500 kbps
     CAN_cfg.speed = CAN_SPEED_500KBPS;
+
     /* create a queue for CAN receiving */
     CAN_cfg.rx_queue = xQueueCreate(10, sizeof(CAN_frame_t));
 }
@@ -88,10 +104,9 @@ esp_err_t VerinCan::to_CAN(float targetPos, float currentLim, float dutyCycle, i
 
     // Movement Profile, 0: Normal, 1: Precision, 2: Step
     send_frame.data.u8[6] = mvtProfile; //0x00;
-
+    
     // Allow Movement (bool)
     send_frame.data.u8[7] = allowMvt; //0x01;
-
     return ESP_OK;
 }
 
@@ -102,10 +117,8 @@ esp_err_t VerinCan::setup_frame_CAN()
     wake_frame.FIR.B.DLC = 2;
     wake_frame.data.u8[0] = 0x01;
     wake_frame.data.u8[1] = 0x00;
-    
     send_frame.FIR.B.FF = CAN_frame_std;
     send_frame.MsgID = 0x21B;
     send_frame.FIR.B.DLC = 8;
-
     return ESP_OK;
 }

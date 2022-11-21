@@ -29,7 +29,7 @@ esp_err_t _Devices::init(){
 
     init_success = status == ESP_OK;
 
-    Serial.printf("%s - _Devices::init() - Initialization finished. %ss\n", init_success ? "INFO" : "ERROR", init_success ? "SUCCEEDED" : "FAILED" );
+    Serial.printf("%s - _Devices::init() - Initialization finished. %s\n", init_success ? "INFO" : "ERROR", init_success ? "SUCCEEDED" : "FAILED" );
 
     return status;
 }

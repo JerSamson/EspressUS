@@ -1,6 +1,7 @@
 #include "./Devices/pressureSensor.h"
 
-pressureSensor_t::pressureSensor_t(gpio_num_t pin, adc1_channel_t channel , adc_bits_width_t width, adc_attenuation_t attenuation): adc(Gpio::GpioADC(pin, channel, width, attenuation)) {
+pressureSensor_t::pressureSensor_t(gpio_num_t pin, adc1_channel_t channel, adc_bits_width_t width, adc_attenuation_t attenuation): 
+    adc(Gpio::GpioADC(pin, channel, width, attenuation)) {
 }
 
 esp_err_t pressureSensor_t::init(){
@@ -18,7 +19,6 @@ float pressureSensor_t::get_pressure(){
     float pressure = adc.voltage_to_pressure(voltage);
     float pressure_bar = pressure/14.5;
 
-    Serial.printf("PRESSURE SENSOR - Raw: %d\t Voltage: %2fV\tpressure: %2fPSI\tBar:%2f\n", raw_data, voltage, pressure, pressure_bar);
-
     return pressure_bar;
 }
+

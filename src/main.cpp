@@ -29,6 +29,24 @@ void Main::run(void)
     return;
   }
 
+  bool heating = ble.tryGetCharacteristic("ManualHeat")->getValue() == "1";
+  bool flushing = ble.tryGetCharacteristic("ManualFlush")->getValue() == "1";
+  bool verinUp = ble.tryGetCharacteristic("ManualVerinUp")->getValue() == "1";
+  bool verinDown = ble.tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
+
+  if(heating){
+    Serial.println("INFO - Manual command received - HEATING");
+  }
+  if(flushing){
+    Serial.println("INFO - Manual command received - FLUSHING");
+  }
+  if(verinUp){
+    Serial.println("INFO - Manual command received - VERIN UP");
+  }
+  if(verinDown){
+    Serial.println("INFO - Manual command received - VERIN DOWN");
+  }
+  
   // Add what to run here
 
 }
@@ -140,7 +158,7 @@ void Main::demo_tech(){
   float _i = 0.0;
   float _d = 0.05;
   float cible = 6.5; //bars
-  float lastMeasure = 0.0; //bars
+  // float lastMeasure = 0.0; //bars
   float command; //Duty Cycle
   float error; //bars
   float lastError;

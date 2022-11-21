@@ -351,7 +351,7 @@ void BLE_Base::DefaultCallback::onWrite(BLECharacteristic *pCharacteristic)
 
     if (rxValue.length() > 0)
     {
-        Serial.printf("INFO - onWrite - %s updated to", pCharacteristic->getUUID().toString());
+        Serial.printf("INFO - onWrite - %s updated to ", pCharacteristic->getUUID().toString().c_str());
 
         for (int i = 0; i < rxValue.length(); i++)
         {
@@ -371,7 +371,7 @@ void BLE_Base::checkToReconnect() // added
         Serial.println("Disconnected: start advertising");
         oldDeviceConnected = deviceConnected;
     }
-    
+
     // connected so reset boolean control
     if (deviceConnected && !oldDeviceConnected)
     {

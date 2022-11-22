@@ -13,10 +13,10 @@
 #include "HX711.h"
 
 #include "./Models/Gpio/gpio.h"
-#include "./Models/BLE/BLE_base.h"
+#include "./Models/BLE.h"
 #include "./Models/Controller.h"
-#include "patch.h"
 #include "./Devices/Devices.h"
+#include "patch.h"
 
 #define pdSECOND pdMS_TO_TICKS(1000)
 
@@ -47,7 +47,7 @@ public:
     // Controller
     Controller controller = Controller();
 
-    BLE_Base ble = BLE_Base();
+    // BLE ble = BLE();
 
     Main(/* args */);
     ~Main();

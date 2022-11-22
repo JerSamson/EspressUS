@@ -35,6 +35,11 @@ enum CHARAC_TYPE {
     DATA
 };
 
+// Struct to communicate user action to android app:
+// Characteristic value :  0            -> User action requested
+// Characteristic value : -1            -> User action 'Idle'
+// Characteristic value : anything else -> User action received
+
 struct user_action{
     std::string chracteristic_name;
     BLECharacteristic* ble_char;
@@ -55,7 +60,7 @@ struct user_action{
 };
 
 
-class BLE_Base
+class BLE
 {
     private:
     static bool deviceConnected;
@@ -63,6 +68,7 @@ class BLE_Base
     static BLEServer *pServer;
     static BLEService *pService;
     static BLEAdvertising *pAdvertising;
+    static int num_client;
 
     // Maps characteristics UUID to their given name
     static std::map<std::string, std::string> characteristic_uuid_map;
@@ -74,11 +80,11 @@ class BLE_Base
     static std::map<std::string, BLECharacteristic*> characteristic_map;
     // Maps active user actions to it's characteristic name
     static std::map<std::string, user_action> user_action_map;
+    BLE();
 
     public:
-    BLE_Base();
 
-    void setup();        
+    static void setup();        
 
     // Returns True if was successful, False if the characteristic does not exist or if operation failed.
     static bool update_characteristic(std::string characteristicName, std::string value);
@@ -88,24 +94,30 @@ class BLE_Base
     // Returns true if the characteristic exists and has the specified permissions.
     static bool characteristic_has_persission(std::string characteristicName, uint32_t permission);
 
-    bool request_user_action(std::string characteristicName);
-    bool try_get_user_action_result(std::string characteristicName, std::string &result);
-    bool user_action_requested(std::string characteristicName);
-    bool user_action_received(std::string characteristicName);
+    static bool request_user_action(std::string characteristicName);
+    static bool try_get_user_action_result(std::string characteristicName, std::string &result);
+    static bool user_action_requested(std::string characteristicName);
+    static bool user_action_received(std::string characteristicName);
     static user_action get_user_action_from_characteristic(std::string uuid);
 
     // Returns number of characteristics associated to the service.
-    int len()
+    static int len()
     {
         return characteristic_map.size();
+    }
+
+    static int n_client(){
+        return num_client;
     }
 
     // Returns a characteristic with the given name if it exist, else NULL.
     static BLECharacteristic *tryGetCharacteristic(std::string name);
 
     // Creates and returns a characteristic with a unique UUID and stores it in thecharacteristic table with the provided string as a key
-    BLECharacteristic *add_characteristic(std::string name, uint32_t permissions, std::string uuid, BLECharacteristicCallbacks *callbacks = nullptr);
+    static BLECharacteristic *add_characteristic(std::string name, uint32_t permissions, std::string uuid, BLECharacteristicCallbacks *callbacks = nullptr);
     
+    static void checkToReconnect(); 
+
     class ServerCallbacks: public BLEServerCallbacks {
         void onConnect(BLEServer* pServer);
         void onDisconnect(BLEServer* pServer);
@@ -119,7 +131,6 @@ class BLE_Base
         void onWrite(BLECharacteristic *pCharacteristic);
     };
 
-    void checkToReconnect(); 
 
-}; // BLE_base class
+}; // BLE class
 

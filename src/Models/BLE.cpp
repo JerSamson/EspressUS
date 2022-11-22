@@ -1,102 +1,65 @@
-#include "./Models/BLE/BLE_base.h"
+#include "./Models/BLE.h"
 
 // Static variables initialisation
-bool BLE_Base::deviceConnected = false;
-bool BLE_Base::oldDeviceConnected = false;
-BLEServer *BLE_Base::pServer;
-BLEService *BLE_Base::pService;
-BLEAdvertising *BLE_Base::pAdvertising;
+bool BLE::deviceConnected = false;
+bool BLE::oldDeviceConnected = false;
+int BLE::num_client = 0;
+BLEServer *BLE::pServer;
+BLEService *BLE::pService;
+BLEAdvertising *BLE::pAdvertising;
 
-
-// struct characteristic_definition{
-//     std::string uuid_str;
-//     uint32_t permissions;
-//     CHARAC_TYPE type;
-// };
-
-// Unused for now
-// std::map<std::string, characteristic_definition> characteristic_definition_map = {
-//     {
-//         "Test", {
-//             TEST_CHAR_UUID,
-//             BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY,
-//             DATA
-//         }
-//     },
-//     {
-//         "Pressure",{
-//             PRESSURE_CHAR_UUID,
-//             BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY,
-//             DATA
-//         }
-//     },
-//     {
-//         "StartApp",{
-//             USER_ACTION_CHAR_UUID,
-//             BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY,
-//             USER_ACTION
-//         }
-//     },
-// };
-
-std::map<std::string, user_action> BLE_Base::user_action_map = {
+std::map<std::string, user_action> BLE::user_action_map = {
     // Leave empty at initialisation
 };
 
-std::map<std::string, BLECharacteristic *> BLE_Base::characteristic_map = {
+std::map<std::string, BLECharacteristic *> BLE::characteristic_map = {
     // Leave empty at initialisation
 };
 
-std::map<std::string, std::string> BLE_Base::characteristic_uuid_map = {
-    // {"Test",            TEST_CHAR_UUID},
-    // {"TestFloat",       TESTFLOAT_CHAR_UUID},
-
+std::map<std::string, std::string> BLE::characteristic_uuid_map = {
     {"Pressure",        PRESSURE_CHAR_UUID},
     {"CurrentState",    STATE_CHAR_UUID},
     {"Temp",            TEMP_CHAR_UUID},
     {"Load",            LOAD_CHAR_UUID},
-    {"StartApp",        USER_ACTION_CHAR_UUID},
 
     {"ManualHeat",      MANUAL_HEAT_CHAR_UUID},
     {"ManualFlush",     MANUAL_FLUSH_CHAR_UUID},
     {"ManualVerinUp",   MANUAL_V_UP_CHAR_UUID},
-    {"ManualVerinDown", MANUAL_V_DOWN_CHAR_UUID}
-};
-std::map<std::string, uint32_t> BLE_Base::characteristic_property_map = {
-    // {"Test",            BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY},
-    // {"TestFloat",       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY},
+    {"ManualVerinDown", MANUAL_V_DOWN_CHAR_UUID},
 
+    {"StartApp",        USER_ACTION_CHAR_UUID}
+};
+std::map<std::string, uint32_t> BLE::characteristic_property_map = {
     {"Pressure",        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
     {"CurrentState",    BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
     {"Temp",            BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
     {"Load",            BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
-    {"StartApp",        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY},
 
     {"ManualHeat",      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualFlush",     BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualVerinUp",   BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
-    {"ManualVerinDown", BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE}
-};
-std::map<std::string, CHARAC_TYPE> BLE_Base::characteristic_type_map = {
-    // {"Test",            DATA},
-    // {"TestFloat",       DATA},
+    {"ManualVerinDown", BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
 
+    {"StartApp",        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY}
+};
+std::map<std::string, CHARAC_TYPE> BLE::characteristic_type_map = {
     {"Pressure",        DATA},
     {"CurrentState",    DATA},
     {"Temp",            DATA},
     {"Load",            DATA},
-    {"StartApp",        USER_ACTION},
 
     {"ManualHeat",      DATA},
     {"ManualFlush",     DATA},
     {"ManualVerinUp",   DATA},
-    {"ManualVerinDown", DATA}
+    {"ManualVerinDown", DATA},
+
+    {"StartApp",        USER_ACTION}
 };
 //
 
-void BLE_Base::setup()
+void BLE::setup()
 {
-    Serial.println("INFO - BLE_Base() - Initializing bluetooth module...");
+    Serial.println("INFO\t- BLE() - Initializing bluetooth module...");
 
     deviceConnected = false;
     oldDeviceConnected = false;
@@ -116,7 +79,7 @@ void BLE_Base::setup()
         }
         else
         {
-            Serial.printf("ERROR - Ble_base::Setup() - %s characteristic has no uuid defined.\n", it->first.c_str());
+            Serial.printf("ERROR\t- Ble_base::Setup() - %s characteristic has no uuid defined.\n", it->first.c_str());
             continue;
         }
     }
@@ -129,26 +92,26 @@ void BLE_Base::setup()
     pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
     pAdvertising->setMinPreferred(0x12);
     BLEDevice::startAdvertising();
-    Serial.println("INFO - BLE_Base() - Bluetooth module initialization complete.");
+    Serial.println("INFO\t- BLE() - Bluetooth module initialization complete.");
 }
 
-BLE_Base::BLE_Base()
+BLE::BLE()
 {
     deviceConnected = false;
     oldDeviceConnected = false;
 }
 
 // Turn bit to true, returns if has been requested
-bool BLE_Base::request_user_action(std::string characteristicName)
+bool BLE::request_user_action(std::string characteristicName)
 {
     if(characteristic_type_map.at(characteristicName) != USER_ACTION){
-        Serial.println("WARNING - BLE_Base::request_user_action() - characteristic must user action type to provide proper callbacks.");
+        Serial.println("ERROR\t- BLE::request_user_action() - characteristic must user action type to provide proper callbacks.");
         return false;
     }
 
     if (!characteristic_has_persission(characteristicName, BLECharacteristic::PROPERTY_WRITE))
     {
-        Serial.println("WARNING - BLE_Base::request_user_action() - characteristic must have write permission");
+        Serial.println("ERROR\t- BLE::request_user_action() - characteristic must have write permission");
         return false;
     }
 
@@ -160,13 +123,13 @@ bool BLE_Base::request_user_action(std::string characteristicName)
 
     user_action_map[characteristicName] = userAction;
 
-    Serial.printf("INFO - BLE_Base::request_user_action() - Request action requested '%s'\n", characteristicName.c_str());
+    Serial.printf("INFO\t- BLE::request_user_action() - user action '%s' requested\n", characteristicName.c_str());
 
     return true;
 }
 
-// Returns wether the userAction has been requested or has been received. Store result in result.
-bool BLE_Base::try_get_user_action_result(std::string characteristicName, std::string &result){
+// Returns wether the userAction has been received. Store value result in result.
+bool BLE::try_get_user_action_result(std::string characteristicName, std::string &result){
 
     try{
         user_action userAction = user_action_map.at(characteristicName);
@@ -177,16 +140,16 @@ bool BLE_Base::try_get_user_action_result(std::string characteristicName, std::s
         }
     }
     catch(std::exception& e){
-        Serial.printf("ERROR - try_get_user_action_result() - %s", e.what());
+        Serial.printf("ERROR\t- try_get_user_action_result() - %s", e.what());
     }
 
     return false;
 }
 
-user_action BLE_Base::get_user_action_from_characteristic(std::string uuid){
+user_action BLE::get_user_action_from_characteristic(std::string uuid){
     auto it = characteristic_uuid_map.find(uuid);
     if (it == characteristic_uuid_map.end()){
-        Serial.printf("WARNING - BLE_Base::try_get_user_action_result() - No pending user action under char '%s'.\n", it->first.c_str());
+        Serial.printf("WARNING - BLE::try_get_user_action_result() - No pending user action under char '%s'.\n", it->first.c_str());
         return user_action();
     }
 
@@ -195,14 +158,14 @@ user_action BLE_Base::get_user_action_from_characteristic(std::string uuid){
     return user_action_map.at(charac_name);
 }
 
-bool BLE_Base::user_action_requested(std::string characteristicName){
+bool BLE::user_action_requested(std::string characteristicName){
     if(user_action_map.count(characteristicName) == 0){
         return false;
     }
     return user_action_map.at(characteristicName).requested();
 }
 
-bool BLE_Base::user_action_received(std::string characteristicName){
+bool BLE::user_action_received(std::string characteristicName){
     if(user_action_map.count(characteristicName) == 0){
         return false;
     }
@@ -210,7 +173,7 @@ bool BLE_Base::user_action_received(std::string characteristicName){
 }
 
 // Returns True if was successful, False if the characteristic does not exist or if operation failed.
-bool BLE_Base::update_characteristic(std::string characteristicName, std::string value)
+bool BLE::update_characteristic(std::string characteristicName, std::string value)
 {
     try
     {
@@ -218,7 +181,7 @@ bool BLE_Base::update_characteristic(std::string characteristicName, std::string
 
         if (charac == nullptr)
         {
-            Serial.printf("ERROR - BLE_Base::update_characteristic() - Could not find characteristic '%s'\n", characteristicName.c_str());
+            Serial.printf("ERROR\t- BLE::update_characteristic() - Could not find characteristic '%s'\n", characteristicName.c_str());
             return false;
         }
 
@@ -228,28 +191,28 @@ bool BLE_Base::update_characteristic(std::string characteristicName, std::string
             charac->notify();
         }
 
-        Serial.printf("INFO - updated characteristic '%s' to %s.\n", characteristicName.c_str(), value.c_str());
+        Serial.printf("INFO\t- updated characteristic '%s' to %s.\n", characteristicName.c_str(), value.c_str());
         return true;
     }
     catch (const std::exception &e)
     {
-        Serial.printf("ERROR - Could not update characteristic '%s'.\n\t%s", characteristicName.c_str(), e.what());
+        Serial.printf("ERROR\t- Could not update characteristic '%s'.\n\t%s", characteristicName.c_str(), e.what());
         return false;
     }
 }
 
-bool BLE_Base::update_characteristic(std::string characteristicName, int value){
+bool BLE::update_characteristic(std::string characteristicName, int value){
     return update_characteristic(characteristicName, patch::to_string(toAscii(value)));
 }
 
-bool BLE_Base::update_characteristic(std::string characteristicName, float value){
+bool BLE::update_characteristic(std::string characteristicName, float value){
     char valueStr[10];
     sprintf(valueStr, "%4.4f", value);
     return update_characteristic(characteristicName, valueStr);
 }
 
 // Returns true if the characteristic exists and has the specified permissions.
-bool BLE_Base::characteristic_has_persission(std::string characteristicName, uint32_t permission)
+bool BLE::characteristic_has_persission(std::string characteristicName, uint32_t permission)
 {
     auto iter = characteristic_property_map.find(characteristicName);
     if (iter != characteristic_property_map.end())
@@ -260,7 +223,7 @@ bool BLE_Base::characteristic_has_persission(std::string characteristicName, uin
 }
 
 // Returns a characteristic with the given name if it exist, else NULL.
-BLECharacteristic *BLE_Base::tryGetCharacteristic(std::string name)
+BLECharacteristic *BLE::tryGetCharacteristic(std::string name)
 {
     auto iter = characteristic_map.find(name);
     if (iter != characteristic_map.end())
@@ -271,7 +234,7 @@ BLECharacteristic *BLE_Base::tryGetCharacteristic(std::string name)
 }
 
 // Creates and returns a characteristic with a unique UUID and stores it in thecharacteristic table with the provided string as a key
-BLECharacteristic *BLE_Base::add_characteristic(std::string name, uint32_t permissions, std::string uuid, BLECharacteristicCallbacks *callbacks)
+BLECharacteristic *BLE::add_characteristic(std::string name, uint32_t permissions, std::string uuid, BLECharacteristicCallbacks *callbacks)
 {
 
     // Create characteristic
@@ -301,7 +264,7 @@ BLECharacteristic *BLE_Base::add_characteristic(std::string name, uint32_t permi
 
     // Add characteristic to table
     characteristic_map.insert({name, characteristic});
-    Serial.printf("INFO - Added characteristic '%s' under UUID '%s'.\n", name.c_str(), uuid.c_str());
+    Serial.printf("INFO\t- Added characteristic '%s' under UUID '%s'.\n", name.c_str(), uuid.c_str());
 
     // Add to UUID map if not already in it
     if (!characteristic_uuid_map.count(name))
@@ -312,24 +275,26 @@ BLECharacteristic *BLE_Base::add_characteristic(std::string name, uint32_t permi
     return characteristic;
 }
 
-void BLE_Base::ServerCallbacks::onConnect(BLEServer *pServer)
+void BLE::ServerCallbacks::onConnect(BLEServer *pServer)
 {
     deviceConnected = true;
-    Serial.printf("INFO - BLE::onConnect() - Connected to %d client(s).\n", pServer->getConnectedCount());
+    num_client++;
+    Serial.printf("INFO\t- BLE::onConnect() - Connected to %d client(s).\n", num_client);
 };
 
-void BLE_Base::ServerCallbacks::onDisconnect(BLEServer *pServer)
+void BLE::ServerCallbacks::onDisconnect(BLEServer *pServer)
 {
-    Serial.printf("INFO - BLE::onDisconnect() - Now connected to %d client(s).\n", pServer->getConnectedCount());
     deviceConnected = false;
+    num_client--;
+    Serial.printf("INFO\t- BLE::onDisconnect() - Now connected to %d client(s).\n", num_client);
 }
 
-void BLE_Base::UserActionCallback::onWrite(BLECharacteristic *pCharacteristic)
+void BLE::UserActionCallback::onWrite(BLECharacteristic *pCharacteristic)
 {
     std::string rxValue = pCharacteristic->getValue();
     pCharacteristic->notify();
 
-    Serial.println("DEBUG - UserActionCallback::onWrite() invoked");
+    Serial.println("DEBUG\t- UserActionCallback::onWrite() invoked");
 
     if (rxValue.length() > 0)
     {
@@ -345,13 +310,13 @@ void BLE_Base::UserActionCallback::onWrite(BLECharacteristic *pCharacteristic)
     }
 }
 
-void BLE_Base::DefaultCallback::onWrite(BLECharacteristic *pCharacteristic)
+void BLE::DefaultCallback::onWrite(BLECharacteristic *pCharacteristic)
 {
     std::string rxValue = pCharacteristic->getValue();
 
     if (rxValue.length() > 0)
     {
-        Serial.printf("INFO - onWrite - %s updated to ", pCharacteristic->getUUID().toString().c_str());
+        Serial.printf("INFO\t- onWrite - %s updated to ", pCharacteristic->getUUID().toString().c_str());
 
         for (int i = 0; i < rxValue.length(); i++)
         {
@@ -361,7 +326,7 @@ void BLE_Base::DefaultCallback::onWrite(BLECharacteristic *pCharacteristic)
     }
 }
 
-void BLE_Base::checkToReconnect() // added
+void BLE::checkToReconnect() // added
 {
     // disconnected so advertise
     if (!deviceConnected && oldDeviceConnected)

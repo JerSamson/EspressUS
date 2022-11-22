@@ -17,23 +17,30 @@ enum STATES{
     CHOKE        = 10,
     DRIPPING     = 11,
     FLUSH        = 12,
+    WAIT_CLIENT  = 13,
     ERROR        = 0
 };
 
-struct Transition
-{
-    STATES next_state;
-    bool (* condition) ();
+const std::map<STATES, std::string> state2str_map = {
+    {IDLE        , "Idle"}, 
+    {INIT        , "Initialisation"},
+    {HEATING     , "Heating"},
+    {FILL_BOILER , "Fill boiler"},
+    {READY       , "Ready"},
+    {VERIN_UP    , "Verin up"},
+    {FILLING_HEAD, "Filling head"},
+    {EXTRACT     , "Extract"},
+    {DONE        , "Done!"},
+    {CHOKE       , "Choke"},
+    {DRIPPING    , "Dripping"},
+    {FLUSH       , "Flush"},
+    {WAIT_CLIENT , "Waiting for client" },
+    {ERROR       , "Error"} 
 };
 
-struct State
+inline const char* ToString(STATES state)
 {
-    STATES state;
-    Transition transitions[5];
-    esp_err_t (* action) ();
-};
+    if(state2str_map.count(state) == 0) return "Unknown";
 
-// bool operator==(const State& lhs, const State& rhs)
-// {
-//     return lhs.state == rhs.state;
-// }
+    return state2str_map.at(state).c_str();
+}

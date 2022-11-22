@@ -5,7 +5,7 @@ SSR::SSR(gpio_num_t output, bool _initial_state): output_pin(Gpio::GpioOutput(ou
 }
 
 esp_err_t SSR::init(){
-    Serial.println("INFO - SSR::init() - Initializing SSR...");
+    Serial.println("INFO\t- SSR::init() - Initializing SSR...");
     esp_err_t status{ESP_OK};
 
     status |= output_pin.init();
@@ -23,7 +23,7 @@ esp_err_t SSR::set(bool state){
     }
 
     if(output_pin.state() == state){
-        Serial.println("INFO - SSR::set() - Tried to set SSR to same state, skipping.");
+        Serial.println("INFO\t- SSR::set() - Tried to set SSR to same state, skipping.");
         return ESP_OK;
     }
 

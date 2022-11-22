@@ -4,8 +4,25 @@
 max31855k_t::max31855k_t(uint8_t vcc, uint8_t sck, uint8_t miso, uint8_t cs) : probe(cs, vcc, sck, miso){
 }
 
-float max31855k_t::get_temp(){
-    // Read the temperature in Celsius
+// float max31855k_t::get_temp(){
+//     // Read the temperature in Celsius
+//     float temperature = probe.readTempC();
+//     if (!isnan(temperature)) {
+//       Serial.printf("Temp[C]=%f\n", temperature);
+//       return temperature;
+//     }
+
+//     Serial.println("WARNING - max31855k_t::get_temp() - thermocouple data is NAN");
+//     return -1;
+// }
+
+float max31855k_t::read(int readings){
+    if(!is_init()){
+      Serial.println("WARNING - max31855k_t::read() - Tried to read thermocouple but it is not initialized.");
+      return 0.0;
+    }
+
+    // Read the temperature in Celsius    
     float temperature = probe.readTempC();
     if (!isnan(temperature)) {
       Serial.printf("Temp[C]=%f\n", temperature);
@@ -59,6 +76,6 @@ void max31855k_t::test_read()
   }
 
   esp_err_t max31855k_t::init(){
-    Serial.println("INFO - max31855k_t::init() - Initializing thermocouple...");
+    Serial.println("INFO\t- max31855k_t::init() - Initializing thermocouple...");
     return ESP_OK;
   }

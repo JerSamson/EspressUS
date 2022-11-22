@@ -19,7 +19,7 @@ esp_err_t VerinCan::init(){
 esp_err_t VerinCan::wake_up(){
     esp_err_t status{ESP_OK};
 
-    Serial.println("INFO - VerinCan::Wake_up() - Waking up the verin");
+    Serial.println("INFO\t- VerinCan::Wake_up() - Waking up the verin");
     status |= ESP32Can.CANWriteFrame(&wake_frame);
 
     delay(100);
@@ -78,7 +78,7 @@ VerinCan::VerinCan(gpio_num_t rx, gpio_num_t tx){
 esp_err_t VerinCan::to_CAN(float targetPos, float currentLim, float dutyCycle, int mvtProfile, bool allowMvt)
 {
     if(!init_success){
-        Serial.println("ERROR - Send_CAN() - Init not done");
+        Serial.println("ERROR\t- Send_CAN() - Init not done");
         return ESP_ERR_INVALID_STATE;
     }
 

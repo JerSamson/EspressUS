@@ -8,10 +8,11 @@ void setup()
   Serial.println("Starting...\n");
 
   BLEDevice::init(DEVICE_NAME);
+  BLE::setup();
 
   if (ESP_OK != my_main.setup())
   {
-    Serial.print("ERROR - Main setup failed. Loop should not be executed.");
+    Serial.print("ERROR\t- Main setup failed. Loop should not be executed.");
   }
 }
 
@@ -29,23 +30,25 @@ void Main::run(void)
     return;
   }
 
-  bool heating = ble.tryGetCharacteristic("ManualHeat")->getValue() == "1";
-  bool flushing = ble.tryGetCharacteristic("ManualFlush")->getValue() == "1";
-  bool verinUp = ble.tryGetCharacteristic("ManualVerinUp")->getValue() == "1";
-  bool verinDown = ble.tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
+  controller.execute();
 
-  if(heating){
-    Serial.println("INFO - Manual command received - HEATING");
-  }
-  if(flushing){
-    Serial.println("INFO - Manual command received - FLUSHING");
-  }
-  if(verinUp){
-    Serial.println("INFO - Manual command received - VERIN UP");
-  }
-  if(verinDown){
-    Serial.println("INFO - Manual command received - VERIN DOWN");
-  }
+  // bool heating = BLE::tryGetCharacteristic("ManualHeat")->getValue() == "1";
+  // bool flushing = BLE::tryGetCharacteristic("ManualFlush")->getValue() == "1";
+  // bool verinUp = BLE::tryGetCharacteristic("ManualVerinUp")->getValue() == "1";
+  // bool verinDown = BLE::tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
+
+  // if(heating){
+  //   Serial.println("INFO\t- Manual command received - HEATING");
+  // }
+  // if(flushing){
+  //   Serial.println("INFO\t- Manual command received - FLUSHING");
+  // }
+  // if(verinUp){
+  //   Serial.println("INFO\t- Manual command received - VERIN UP");
+  // }
+  // if(verinDown){
+  //   Serial.println("INFO\t- Manual command received - VERIN DOWN");
+  // }
   
   // Add what to run here
 
@@ -60,9 +63,7 @@ esp_err_t Main::setup()
   Devices = _Devices::getInstance();
   status |= Devices.init();
 
-  ble.setup();
-
-  Serial.println("DEBUG - Main::setup() - Loading configuration");
+  // Serial.println("DEBUG\t- Main::setup() - Loading configuration");
 
   // _Configuration& config = _Configuration::getInstance();
   // config.loadConfig(config_map.at(CONFIG::Default));
@@ -70,6 +71,9 @@ esp_err_t Main::setup()
   controller.clear_history();
 
   setup_success = ESP_OK == status;
+
+  Serial.println("\n========== End of Main::setup() ==========\n\n");
+
   return status;
 }
 
@@ -127,11 +131,11 @@ void Main::demo_tech(){
   Devices.pump.send_command(200);
 
   while(millis() - startPreInf < 15000){
-    if(Devices.pressureSensor.get_pressure() > 2.0){
+    if(Devices.pressureSensor.read() > 2.0){
       break;
     }
     if(millis() - startPreInf > 8000){
-      if(Devices.pressureSensor.get_pressure() == 0.0){
+      if(Devices.pressureSensor.read() == 0.0){
         while(true){
           Serial.println("PINE A LÈVE PAS CALISS");
         }
@@ -142,7 +146,7 @@ void Main::demo_tech(){
 
   Devices.pump.send_command(82);
   while(millis() - startPreInf < 15000){
-    Devices.pressureSensor.get_pressure();
+    Devices.pressureSensor.read();
     delay(100);
   }
 
@@ -172,12 +176,12 @@ void Main::demo_tech(){
   while(true){
 
     pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
-    pressure = Devices.pressureSensor.get_pressure();
+    pressure = Devices.pressureSensor.read();
     error = cible - pressure;
     time = std::chrono::high_resolution_clock::now();
     dt = std::chrono::duration<double, std::milli>(time-lastTime).count();
 
-    ble.update_characteristic("Pressure", pressure);
+    BLE::update_characteristic("Pressure", pressure);
 
     if(dt != 0.0){
       derivativeCycle = (error-lastError)/(dt/1000);
@@ -198,7 +202,7 @@ void Main::demo_tech(){
     lastError = error;
     if(pos < 0x00FA && pos != -1){
       command = 0.0;
-    }else if(command < 0.0 && Devices.pressureSensor.get_pressure() > 9.5){
+    }else if(command < 0.0 && Devices.pressureSensor.read() > 9.5){
       on = false;
       command = 0.0;
     }else if(command < 0.0){
@@ -296,7 +300,7 @@ void Main::test_devices_freq()
   {
     pt_1 = millis();
     for (j = 0; j < inner_itt; j++)
-      Devices.loadCell.get_load();
+      Devices.loadCell.read(10);
     pt_2 = millis();
 
     delay = pt_2 - pt_1;
@@ -321,7 +325,7 @@ void Main::test_devices_freq()
   {
     pt_1 = millis();
     for (j = 0; j < inner_itt; j++)
-      Devices.pressureSensor.get_pressure();
+      Devices.pressureSensor.read();
     pt_2 = millis();
 
     delay = pt_2 - pt_1;
@@ -443,7 +447,7 @@ void Main::demo_edika()
 int _counter = 0;
 void Main::test_ble()
 {
-  ble.update_characteristic("Test", _counter++);
+  BLE::update_characteristic("Test", _counter++);
   Serial.println(_counter);
 }
 
@@ -452,11 +456,11 @@ void Main::test_user_action()
   std::string ua = "StartApp";
   std::string result = "";
 
-  if (!ble.user_action_requested(ua))
-    ble.request_user_action(ua);
+  if (!BLE::user_action_requested(ua))
+    BLE::request_user_action(ua);
 
-  Serial.printf("User action requested: %s\n", ble.user_action_requested(ua) ? "YAS QUEEN" : "NAH FAM");
-  bool received = ble.try_get_user_action_result(ua, result);
+  Serial.printf("User action requested: %s\n", BLE::user_action_requested(ua) ? "YAS QUEEN" : "NAH FAM");
+  bool received = BLE::try_get_user_action_result(ua, result);
 
   if (received)
   {
@@ -473,13 +477,13 @@ bool Main::wait_for_user_action(std::string ua)
   // std::string ua = "StartApp";
   std::string result = "";
 
-  if (ble.user_action_received(ua))
+  if (BLE::user_action_received(ua))
   {
     return true;
   }
 
-  if (!ble.user_action_requested(ua))
-    ble.request_user_action(ua);
+  if (!BLE::user_action_requested(ua))
+    BLE::request_user_action(ua);
 
   return false;
 }
@@ -488,7 +492,7 @@ float _floatCounter = 0.0f;
 void Main::test_ble_float()
 {
   _floatCounter += 0.33;
-  ble.update_characteristic("TestFloat", (float)sin(_floatCounter));
+  BLE::update_characteristic("TestFloat", (float)sin(_floatCounter));
   Serial.println(_floatCounter);
 }
 
@@ -502,7 +506,7 @@ void Main::test_ble_state()
   }
   state_counter2++;
 
-  ble.update_characteristic("CurrentState", state_counter);
+  BLE::update_characteristic("CurrentState", state_counter);
 
   if (state_counter > 12)
     state_counter = 0;
@@ -513,7 +517,7 @@ void Main::test_ble_state()
 void Main::test_ble_dynamic_plot()
 {
   _floatCounter += 0.33;
-  ble.update_characteristic("Pressure", (float)log(_floatCounter));
+  BLE::update_characteristic("Pressure", (float)log(_floatCounter));
   Serial.println(_floatCounter);
 }
 
@@ -523,7 +527,7 @@ void Main::test_ble_load()
   _loadCounter += 0.33;
   if (_loadCounter >= 100)
     _loadCounter = 0;
-  ble.update_characteristic("Load", _loadCounter);
+  BLE::update_characteristic("Load", _loadCounter);
   Serial.println(_loadCounter);
 }
 
@@ -533,7 +537,7 @@ void Main::test_ble_temp()
   _tempCounter += 0.33;
   if (_tempCounter >= 100)
     _tempCounter = 0;
-  ble.update_characteristic("Load", _tempCounter);
+  BLE::update_characteristic("Load", _tempCounter);
   Serial.println(_tempCounter);
 }
 

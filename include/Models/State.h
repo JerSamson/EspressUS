@@ -18,6 +18,7 @@ enum STATES{
     DRIPPING     = 11,
     FLUSH        = 12,
     WAIT_CLIENT  = 13,
+    MANUAL_STATE = 14,
     ERROR        = 0
 };
 
@@ -34,7 +35,8 @@ const std::map<STATES, std::string> state2str_map = {
     {CHOKE       , "Choke"},
     {DRIPPING    , "Dripping"},
     {FLUSH       , "Flush"},
-    {WAIT_CLIENT , "Waiting for client" },
+    {WAIT_CLIENT , "Waiting for client"},
+    {MANUAL_STATE, "Manual"},
     {ERROR       , "Error"} 
 };
 

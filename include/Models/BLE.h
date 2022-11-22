@@ -20,6 +20,7 @@
 #define TEMP_CHAR_UUID          "25a62c3f-e74e-4dfd-96c2-bd9da4cac697"
 #define LOAD_CHAR_UUID          "d268e4e3-c6f9-491b-a149-fee17cbc3ed9"
 
+#define OP_MODE_CHAR_UUID       "2cc0f92e-12d0-49d2-9d0e-2fa4ea27c525"
 #define MANUAL_HEAT_CHAR_UUID   "41d4fe9f-0f2e-447f-82dc-a71e9c684f38"
 #define MANUAL_FLUSH_CHAR_UUID  "bd9286f9-f68c-419b-90f3-69d570fea9e6"
 #define MANUAL_V_UP_CHAR_UUID   "0592b5b5-65be-4382-bcd2-0f8a54465ef8"

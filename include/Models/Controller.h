@@ -11,6 +11,10 @@
 #include "patch.h"
 #include "State.h"
 
+enum OperationMode{
+    AUTO    = 0,
+    MANUAL  = 1
+};
 
 class Controller final{
     private:
@@ -19,6 +23,7 @@ class Controller final{
     static _Configuration& Configuration;
 
     bool first_loop = true;
+    OperationMode operation_mode = OperationMode::AUTO;
 
     esp_err_t status = ESP_OK;
 
@@ -74,6 +79,7 @@ class Controller final{
     esp_err_t dripping_action();
     esp_err_t flush_action();
     esp_err_t error_action();
+    esp_err_t manual_action();
 
     // Transitions
     bool wait_client_transition();

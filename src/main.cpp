@@ -31,24 +31,6 @@ void Main::run(void)
   }
 
   controller.execute();
-
-  // bool heating = BLE::tryGetCharacteristic("ManualHeat")->getValue() == "1";
-  // bool flushing = BLE::tryGetCharacteristic("ManualFlush")->getValue() == "1";
-  // bool verinUp = BLE::tryGetCharacteristic("ManualVerinUp")->getValue() == "1";
-  // bool verinDown = BLE::tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
-
-  // if(heating){
-  //   Serial.println("INFO\t- Manual command received - HEATING");
-  // }
-  // if(flushing){
-  //   Serial.println("INFO\t- Manual command received - FLUSHING");
-  // }
-  // if(verinUp){
-  //   Serial.println("INFO\t- Manual command received - VERIN UP");
-  // }
-  // if(verinDown){
-  //   Serial.println("INFO\t- Manual command received - VERIN DOWN");
-  // }
   
   // Add what to run here
 

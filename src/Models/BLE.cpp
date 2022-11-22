@@ -22,6 +22,7 @@ std::map<std::string, std::string> BLE::characteristic_uuid_map = {
     {"Temp",            TEMP_CHAR_UUID},
     {"Load",            LOAD_CHAR_UUID},
 
+    {"OperationMode",   OP_MODE_CHAR_UUID},
     {"ManualHeat",      MANUAL_HEAT_CHAR_UUID},
     {"ManualFlush",     MANUAL_FLUSH_CHAR_UUID},
     {"ManualVerinUp",   MANUAL_V_UP_CHAR_UUID},
@@ -35,6 +36,7 @@ std::map<std::string, uint32_t> BLE::characteristic_property_map = {
     {"Temp",            BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
     {"Load",            BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
 
+    {"OperationMode",   BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualHeat",      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualFlush",     BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualVerinUp",   BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
@@ -48,6 +50,7 @@ std::map<std::string, CHARAC_TYPE> BLE::characteristic_type_map = {
     {"Temp",            DATA},
     {"Load",            DATA},
 
+    {"OperationMode",   DATA},
     {"ManualHeat",      DATA},
     {"ManualFlush",     DATA},
     {"ManualVerinUp",   DATA},

@@ -8,12 +8,31 @@ Controller::Controller(){
 }
 
 esp_err_t Controller::execute(){
-    // if(!Configuration.is_valid()){
-    //     Serial.println("ERROR\t- Controller::execute - Invalid configuration.");
-    //     status = ESP_ERR_INVALID_STATE;
-    //     return status;
-    // }
+    if(!Configuration.is_valid()){
+        Serial.println("ERROR\t- Controller::execute - Invalid configuration.");
+        status = ESP_ERR_INVALID_STATE;
+        return status;
+    }
 
+    // Get operation mode
+    OperationMode lastOpMode = operation_mode;
+    operation_mode = BLE::tryGetCharacteristic("OperationMode")->getValue() == "0" ? OperationMode::AUTO : OperationMode::MANUAL;
+
+    if(operation_mode == OperationMode::AUTO && lastOpMode != operation_mode){
+        // When going from manual to auto, reset state to start
+        last_state = WAIT_CLIENT; // Prevents code to resume Manual_State once connection is validated
+        set_state(WAIT_CLIENT);    
+    }
+
+    // OperationMode::MANUAL
+    if(operation_mode == MANUAL){
+        set_state(MANUAL_STATE);
+        manual_action();
+        return status;
+    }
+
+
+    // OperationMode::AUTO 
     if(first_loop){
         Serial.printf("INFO\t- Controller::execute() - current state: '%s'\n", ToString(current_state));
     }
@@ -336,6 +355,27 @@ void Controller::clear_history(){
 }
 
 // ================== ACTIONS ==================
+
+    esp_err_t Controller::manual_action(){
+        bool heating = BLE::tryGetCharacteristic("ManualHeat")->getValue() == "1";
+        bool flushing = BLE::tryGetCharacteristic("ManualFlush")->getValue() == "1";
+        bool verinUp = BLE::tryGetCharacteristic("ManualVerinUp")->getValue() == "1";
+        bool verinDown = BLE::tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
+
+        if(heating){
+            Serial.println("INFO\t- Manual command received - HEATING");
+        }
+        if(flushing){
+            Serial.println("INFO\t- Manual command received - FLUSHING");
+        }
+        if(verinUp){
+            Serial.println("INFO\t- Manual command received - VERIN UP");
+        }
+        if(verinDown){
+            Serial.println("INFO\t- Manual command received - VERIN DOWN");
+        }
+        return status;
+    }
 
     esp_err_t Controller::wait_client_action(){
         print_once("DEBUG\t- WAIT CLIENT ACTION FIRST LOOP");

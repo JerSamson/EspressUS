@@ -233,6 +233,7 @@ BLECharacteristic *BLE::tryGetCharacteristic(std::string name)
     {
         return iter->second;
     }
+    Serial.printf("ERROR\t- BLE::tryGetCharacteristic - Could not get characteristic '%s'\n", name.c_str());
     return nullptr;
 }
 

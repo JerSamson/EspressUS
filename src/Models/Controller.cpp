@@ -15,20 +15,11 @@ esp_err_t Controller::execute(){
     }
 
     // Get operation mode
-    OperationMode lastOpMode = operation_mode;
     operation_mode = BLE::tryGetCharacteristic("OperationMode")->getValue() == "0" ? OperationMode::AUTO : OperationMode::MANUAL;
-
-    if(operation_mode == OperationMode::AUTO && lastOpMode != operation_mode){
-        // When going from manual to auto, reset state to start
-        last_state = WAIT_CLIENT; // Prevents code to resume Manual_State once connection is validated
-        set_state(WAIT_CLIENT);    
-    }
 
     // OperationMode::MANUAL
     if(operation_mode == MANUAL){
         set_state(MANUAL_STATE);
-        manual_action();
-        return status;
     }
 
 
@@ -172,6 +163,17 @@ esp_err_t Controller::execute(){
         Serial.printf("ERROR\t- Controller::execute() - In error state: (%s)\n", err_log);
         break;
 
+    case MANUAL_STATE:
+        status = manual_action();
+
+        // Transitions
+        if(ESP_OK != status)                            {set_state(ERROR);}
+        else if(operation_mode == OperationMode::AUTO)  {
+            set_state(WAIT_CLIENT);    
+            last_state = WAIT_CLIENT; // Prevents code to resume Manual_State once connection is validated
+        }
+        break;
+
     default:
         int state_num = (static_cast<int>(current_state));
         sprintf(err_log, "Controller was in an unknown state (%d)", state_num);
@@ -205,6 +207,7 @@ esp_err_t Controller::execute(){
 }
 
 void Controller::set_state(STATES state){
+    if(state == ERROR){err_resolved=false;}
     if(current_state != state){
         last_state = current_state;
         current_state = state;

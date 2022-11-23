@@ -12,7 +12,7 @@
  * @param (*pidOutput) The function pointer for delivering system output.
  */
 
-double get_ellapsed_ms(std::chrono::_V2::system_clock::time_point since){
+double get_ellapsed_s(std::chrono::_V2::system_clock::time_point since){
     return std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-since).count() / 1000.0;
 }
 
@@ -59,7 +59,7 @@ T PIDController<T>::tick(float currentFeedback)
   currentTime = std::chrono::high_resolution_clock::now();
   if(!firstPass){
     //Calculate time since last tick() cycle.
-    double deltaTime = get_ellapsed_ms(lastTime);
+    double deltaTime = get_ellapsed_s(lastTime);
 
     //Calculate the integral of the feedback data since last cycle.
     double cycleIntegral = ((lastError + error) / 2) * deltaTime;

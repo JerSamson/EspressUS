@@ -1,5 +1,7 @@
 #include <Arduino.h>
+#include <chrono>
 #include "./main.h"
+#include "./Models/PID.h"
 
 static Main my_main;
 
@@ -49,7 +51,7 @@ void scan_for_I2C()
   else {
     Serial.println("done\n");
   }
-  delay(5000);          
+  delay(5000);
 }
 
 
@@ -71,98 +73,210 @@ void Main::demo_edika(){
   delay(250);
 
   int pos;
+  float speed = 80.0f;
   uint8_t ms = millis();
   while(true){
     if(millis() - ms > 1200){
       Serial.println("Rising...");
-      Devices.verin.send_CAN(112.0f);
+      Devices.verin.send_CAN(112.0f, speed);
       ms = millis();
-      Devices.pressureSensor.get_pressure();
     }
-    pos = Devices.verin.receive_CAN(rx_frame);
+    pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
+    if(pos > 0x03E8){
+      speed = 30.0f;
+    }
     if(pos >= 0x0456){
       delay(200);
       break;
     }
   }
   Serial.println("Verin raised!");
-  delay(10000);
   // 3 way valve open (SSR)
   Serial.println("Opening 3 way valve...");
   Devices.testSSR.set(true);
 
+  //Pré-flush
+  // Serial.println("Pre-flush!");
+  // Devices.pump.send_command(105);
+  // delay(15000);
+  // Devices.pump.stop();
+  
+  //Insertion
+  // Serial.println("Insert ze filtre");
+  // delay(15000);
+  
   // Pump x secondes
   Serial.println("Sending pump command...");
-  Devices.pump.send_command(200);
-  delay(4200);
+  // Devices.loadCell.calibrate(535.0);
+  // Devices.loadCell.zero();
+  // int startPreInf = millis();
+  
+  // Devices.pump.send_command(200);
+  // while(true){
+  //   if(Devices.pressureSensor.get_pressure() > 2.0){
+  //     break;
+  //   }
+  //   if(millis() - startPreInf > 8000){
+  //     if(Devices.pressureSensor.get_pressure() == 0.0){
+  //       Devices.pump.stop();
+  //       while(true){
+  //         Serial.println("PINE A LÈVE PAS CALISS");
+  //       }
+  //     }
+  //   }
+  //   delay(100);
+  // }
+  // Devices.loadCell.zero();
+  // Devices.loadCell.get_load(10);
+  int startPreInf = millis();
+  // Devices.pump.send_command(82);
+  // float load = Devices.loadCell.get_load(10);
+  // while(load < 5.0){
+  //   Serial.printf("Pre-inf weight: %.2f", load);
+  //   load = Devices.loadCell.get_load(10);
+  //   // Devices.pressureSensor.get_pressure();
+  //   delay(100);
+  // }
+  // Serial.printf("Pre-inf weight: %.2f", Devices.loadCell.get_load(10));
+  float p_pompe = 70.0;
+  float i_pompe = 14.0;
+  float d_pompe = 0.0;
+  PIDController<float> PIDPompe(p_pompe, i_pompe, d_pompe);
+  PIDPompe.setOutputBounded(true);
+  PIDPompe.setOutputBounds(-110.0, 110.0);
+  PIDPompe.setMaxIntegralCumulation(40.0);
+  PIDPompe.setTarget(1.5);
+  PIDPompe.setCumulStartFactor(0.8);
+  while(millis() - startPreInf < 18000){
+  
+    float pumpAdjust = PIDPompe.tick(Devices.pressureSensor.get_pressure());
+    printf("Factor: %.2f \n", pumpAdjust);
+
+    Devices.pump.send_command((int) (110 + pumpAdjust));
+    // Devices.loadCell.get_load(10);
+  }
+  Devices.pump.stop();
   // Devices.testSSR.set(false);
-  // Devices.pump.stop();
-  Devices.pump.send_command(30);
+  delay(999999);
 
   Serial.println("Lowering verin...");
   Devices.verin.wake_up();
 
-  long lowering_start = millis();
-  long now = lowering_start;
-  double last_powaaa = 0.0f;
-  double powaaa = 60.0f;
+  std::chrono::_V2::system_clock::time_point time = std::chrono::high_resolution_clock::now();
+  auto lastTime = time;
+  float dt = 0.0;
   int on = true;
+  float _p = 8.0;
+  float _i = 0.006;
+  float _d = 0.06;
+  float cible = 8.5; //bars
+  float command; //Duty Cycle
+  float error; //bars
+  float lastError;
+  float derivativeCycle;
+  float integralCycle;
+  float integralCumul = 0.0;
+  float pressure;
+  // Devices.pump.stop();
+  // while(true){
 
+  //   pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
+  //   if(pos < 0x03F2){
+  //     Devices.pump.stop();
+  //   }
+  //   pressure = Devices.pressureSensor.get_pressure();
+  //   error = cible - pressure;
+  //   time = std::chrono::high_resolution_clock::now();
+
+  //   dt = std::chrono::duration<double, std::milli>(time-lastTime).count();
+  //   if(dt != 0.0){
+  //     derivativeCycle = (error-lastError)/(dt/1000);
+  //     if(error < 0.6*cible){
+  //       integralCycle = ((lastError + error) / 2) * dt;
+  //       integralCumul += integralCycle;
+  //     }
+  //     if(derivativeCycle > 30.0){
+  //       command = error*_p + integralCumul*_i;
+  //       // command = error*_p;
+  //     }else{
+  //       command = (error*_p + integralCumul*_i + derivativeCycle*_d);
+  //       // command = (error*_p + derivativeCycle*_d);
+  //       // printf("Command: %.2f ", command);
+  //     }
+  //   }else{
+  //     command = error  * _p;
+  //   }
+  //   lastTime = time;
+  //   lastError = error;
+
+  //   if(pos < 0x00FA && pos != -1){
+  //     command = 0.0;
+  //   }else if(command < 0.0 && Devices.pressureSensor.get_pressure() > 9.5){
+  //     on = false;
+  //     command = 0.0;
+  //   }else if(command < 0.0){
+  //     command = 0.0;
+  //   }else if(command > 95.0){
+  //     command = 95.0;
+  //   }else{
+  //     on = true;
+  //   }
+
+  //   Devices.verin.send_CAN(0.0f, 20.0 + command, 3.4, 0, on);
+
+  //   if(pos != -1 && pos <= 0x0001){
+  //     Serial.println("U r done bro");
+  //     break;
+  //   }
+  // }
+  bool on = true;
+  float p_verin = 8.0;
+  float i_verin = 0.006;
+  float d_verin = 0.06;
+  PIDController<float> PIDVerin(p_verin, i_verin, d_verin);
+  PIDVerin.setOutputBounded(true);
+  PIDVerin.setOutputBounds(0.0, 75.0);
+  PIDVerin.setMaxIntegralCumulation(30.0);
+  PIDVerin.setTarget(8.5);
+  PIDVerin.setCumulStartFactor(0.5);
   while(true){
-    if(millis() - lowering_start > 1200 || last_powaaa != powaaa){
-      if(Devices.testSSR.get_state() == true){
-        Serial.println("Shutting 3 way valve and pump");
-        Devices.testSSR.set(false);
+    
+    pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
+    if(pos != -1){
+      if(pos <= 0x0001){
+        Serial.println("U r done bro");
+        break;
+      }else if(pos < 0x00FA){
+        command = 0.0;
+      }else if(pos < 0x03F2){
         Devices.pump.stop();
       }
-      Devices.verin.send_CAN(0.0f, powaaa, 3.5, 0, on);
-      last_powaaa = powaaa;
-      lowering_start = millis();
     }
-    pos = Devices.verin.receive_CAN(rx_frame);
-    if(Devices.pressureSensor.get_pressure() == 0.0){
-      powaaa = 90.0f;
-    }else if(Devices.pressureSensor.get_pressure() < 4.0){
-      powaaa = 75.0f;
-    }else if(Devices.pressureSensor.get_pressure() < 6.0){
-      powaaa = 60.0f;
-    }else if(Devices.pressureSensor.get_pressure() < 8.0){
-      powaaa = 40.0f;
-    }else if(Devices.pressureSensor.get_pressure() < 9.0){
-      powaaa = 20.0f;
-    }else if(Devices.pressureSensor.get_pressure() > 10.0){
-      on = 0;
-      powaaa = 20.0f;
-    }
-    if(pos != -1 && pos <= 0x0001){
-      Serial.println("U r done bro");
-      break;
-    }
-    // if(pos != -1){
-    //   if(pos <= 0x02BC && pos > 0x00C8){
-    //     printf("powa 40 Current pos: %d\n", pos);
-    //     powaaa = 40.0f;
-    //   }else if(pos <= 0x00C8 && pos > 0x0001){
-    //     printf("powa 20 Current pos: %d\n", pos);
-    //     powaaa = 20.0f;
-    //   }else if(pos <= 0x0001){
-    //     Serial.println("U r done bro");
-    //     break;
-    //   }
-    // }
-  }
+    
+    float speedAdjust = PIDVerin.tick(Devices.pressureSensor.get_pressure());
 
+    if(speedAdjust == 0.0 && Devices.pressureSensor.get_pressure() > 9.5){
+      on = false;
+    }else{
+      on = true;
+    }
+
+    Devices.verin.send_CAN(0.0f, 20.0 + speedAdjust, 3.4, 0, on);
+  }
+  Devices.testSSR.set(false);
   long lowering_end = millis();
-  now = lowering_end;
+  long now = lowering_end;
   Serial.println("Rising the verin a bit...");
   while(now - lowering_end < 2000){
   
-    Devices.verin.send_CAN(5.0f);
+    Devices.verin.send_CAN(20.0f, 80.0f);
     
     now = millis();
 
     delay(100);
   }
+  delay(2000);
+  Serial.printf("Ending weight: %.2f", Devices.loadCell.get_load(10));
 
   Serial.println("Execution done.");
   delay(900000);
@@ -263,6 +377,9 @@ void Main::run(void)
     Serial.println("WARNING - Cannot run main loop since main::setup() has not succeeded yet.");
     return;
   }
+
+  // Devices.pressureSensor.get_pressure();
+  // delay(500);
 
   demo_edika();
 

@@ -70,6 +70,10 @@ int64_t Controller::get_ellapsed_ms(std::chrono::steady_clock::time_point since)
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - since).count();
 }
 
+double Controller::get_ellapsed_ms(std::chrono::_V2::system_clock::time_point since){
+    return std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-since).count() / 1000.0;
+}
+
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 void Controller::debug_print_map(std::map<uint64_t, float> map){
     Serial.printf("%s:\n", GET_VARIABLE_NAME(map));

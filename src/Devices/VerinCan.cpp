@@ -38,22 +38,30 @@ esp_err_t VerinCan::send_CAN(float targetPos, float dutyCycle, float currentLim,
 
     esp_err_t status{ESP_OK};
 
-    // if(millis() - last_msg_ms >= 5000){
-    //     Serial.println("WAKE UP");
-    //     wake_up();
-    // }
-    // last_msg_ms = millis();
-
     status |= to_CAN(targetPos, currentLim, dutyCycle, mvtProfile, allowMvt);
     ESP32Can.CANWriteFrame(&send_frame);
 
     return status;
 }
 
-int VerinCan::receive_CAN(CAN_frame_t rx_frame){
+int VerinCan::receive_CAN(CAN_frame_t rx_frame, controlParam option){
     if(xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3*portTICK_PERIOD_MS)==pdTRUE){
+        switch(option){
+            case position:
+                return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
+                break;
+            case vitesse:
+                return (rx_frame.data.u8[5] << 8) + rx_frame.data.u8[4];
+                break;
+            case courant:
+                return (rx_frame.data.u8[3] << 8) + rx_frame.data.u8[2];
+                break;
+            default:
+                return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
+                break;
+        }
         // return rx_frame.data.u8[0] | rx_frame.data.u8[1] << 8;
-        return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
+        // return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
     }else{
         return -1;
     }

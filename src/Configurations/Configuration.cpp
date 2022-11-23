@@ -18,9 +18,9 @@ void _Configuration::loadConfig(const char *filename) {
         }
 
     // Copy values from the JsonDocument to the Config
-    strlcpy(config_name,          // <- destination
-    doc["name"] | "Default",      // <- source
-    sizeof(config_name));         // <- destination's capacity
+    strlcpy(config_name,                  // <- destination
+            doc["name"] | "Default",      // <- source
+            sizeof(config_name));         // <- destination's capacity
 
     target_temp = doc["target_temp"] | DEFAULT_TARGET_TEMP;
 

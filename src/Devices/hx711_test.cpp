@@ -15,7 +15,7 @@ esp_err_t hx711_t::init(){
 
     //Init Alimentation Gpio
     status |= alim.init();
-    status |= alim.set(false);
+    status |= alim.set(true);
 
     if(ESP_OK != status){
       Serial.println("ERROR - hx711_t::init() - Could not initialize loadCell's alimentation gpio.");
@@ -83,7 +83,7 @@ void hx711_t::test_read(){
     {
         long reading = scale.get_units(10);
         Serial.print("Result: ");
-        Serial.println(reading);
+        Serial.println(reading/452.0);
         delay(500);
     }
   } 

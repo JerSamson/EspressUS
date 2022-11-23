@@ -272,13 +272,6 @@ void Main::demo_edika()
   //     on = true;
   //   }
 
-  //   Devices.verin.send_CAN(0.0f, 20.0 + command, 3.4, 0, on);
-
-  //   if(pos != -1 && pos <= 0x0001){
-  //     Serial.println("U r done bro");
-  //     break;
-  //   }
-  // }
   bool IsOn = true;
   float p_verin = 8.0;
   float i_verin = 0.006;

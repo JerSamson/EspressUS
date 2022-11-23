@@ -22,7 +22,6 @@ esp_err_t Controller::execute(){
         set_state(MANUAL_STATE);
     }
 
-
     // OperationMode::AUTO 
     if(first_loop){
         Serial.printf("INFO\t- Controller::execute() - current state: '%s'\n", ToString(current_state));
@@ -232,10 +231,6 @@ int64_t Controller::get_ellapsed_ms(std::chrono::steady_clock::time_point since)
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - since).count();
 }
 
-// double Controller::get_ellapsed_ms(std::chrono::_V2::system_clock::time_point since){
-//     return std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-since).count() / 1000.0;
-// }
-
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 void Controller::debug_print_map(std::map<uint64_t, float> map){
     Serial.printf("%s:\n", GET_VARIABLE_NAME(map));
@@ -362,25 +357,42 @@ void Controller::clear_history(){
 }
 
 // ================== ACTIONS ==================
-
     esp_err_t Controller::manual_action(){
         bool heating = BLE::tryGetCharacteristic("ManualHeat")->getValue() == "1";
         bool flushing = BLE::tryGetCharacteristic("ManualFlush")->getValue() == "1";
         bool verinUp = BLE::tryGetCharacteristic("ManualVerinUp")->getValue() == "1";
         bool verinDown = BLE::tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
 
+        float verin_target = verinUp? 112.0f : 0.0f;
+        Devices.verin.send_CAN(verin_target, 20.0f, 3, 0, verinUp||verinDown);
+
+        if(heating || flushing){
+            Devices.testSSR.set(true);
+        }else if(Devices.testSSR.get_state() == true){
+            Devices.pump.stop();
+            Devices.testSSR.set(false);
+        }
+
         if(heating){
             Serial.println("INFO\t- Manual command received - HEATING");
+            Devices.pump.send_command(100);
         }
+
         if(flushing){
             Serial.println("INFO\t- Manual command received - FLUSHING");
+            Devices.pump.send_command(180);
         }
-        if(verinUp){
-            Serial.println("INFO\t- Manual command received - VERIN UP");
+
+        if(verinUp||verinDown){
+            Serial.println("INFO\t- Manual command received - VERIN UP/DOWN");
+            Devices.verin.send_CAN(112.0f, 20.0f);   
         }
-        if(verinDown){
-            Serial.println("INFO\t- Manual command received - VERIN DOWN");
-        }
+        
+        // if(verinDown){
+        //     Serial.println("INFO\t- Manual command received - VERIN DOWN");
+        //     Devices.verin.send_CAN(0.0f, 20.0f);   
+        // }
+
         return status;
     }
 

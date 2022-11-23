@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Arduino.h"
+#include <String>
 
 class DeviceBase
 {
@@ -10,9 +11,5 @@ protected:
 public:
     bool is_init(){ return init_success; }
     virtual esp_err_t init();
-
-    // virtual ~DeviceBase();
 };
-
-    // DeviceBase::~DeviceBase(){};
 

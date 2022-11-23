@@ -51,6 +51,7 @@
         "atomic": "cpp",
         "iterator": "cpp",
         "memory_resource": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "list": "cpp"
     }
 }

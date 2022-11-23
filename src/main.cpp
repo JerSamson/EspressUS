@@ -1,24 +1,67 @@
 #include <Arduino.h>
-#include <chrono>
 #include "./main.h"
 #include "./Models/PID.h"
 
 static Main my_main;
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   Serial.println("Starting...\n");
 
-  if(ESP_OK != my_main.setup()){
-    Serial.print("ERROR - Main setup failed. Loop should not be executed.");
+  BLEDevice::init(DEVICE_NAME);
+  BLE::setup();
+
+  if (ESP_OK != my_main.setup())
+  {
+    Serial.print("ERROR\t- Main setup failed. Loop should not be executed.");
   }
 }
 
-void loop() {
+void loop()
+{
   my_main.run();
   delay(200);
-  // vTaskDelay(pdSECOND);
 }
+
+void Main::run(void)
+{
+  if (!setup_success)
+  {
+    Serial.println("WARNING - Cannot run main loop since main::setup() has not succeeded yet.");
+    return;
+  }
+
+  controller.execute();
+  
+  // Add what to run here
+
+}
+
+esp_err_t Main::setup()
+{
+  esp_err_t status{ESP_OK};
+
+  Serial.println("===== Main Setup. =====");
+
+  Devices = _Devices::getInstance();
+  status |= Devices.init();
+
+  // Serial.println("DEBUG\t- Main::setup() - Loading configuration");
+
+  // _Configuration& config = _Configuration::getInstance();
+  // config.loadConfig(config_map.at(CONFIG::Default));
+
+  controller.clear_history();
+
+  setup_success = ESP_OK == status;
+
+  Serial.println("\n========== End of Main::setup() ==========\n\n");
+
+  return status;
+}
+
+// Tests methods
 
 void scan_for_I2C()
 {
@@ -26,36 +69,43 @@ void scan_for_I2C()
   int nDevices;
   Serial.println("Scanning...\n");
   nDevices = 0;
-  for(address = 1; address < 127; address++ ) {
+  for (address = 1; address < 127; address++)
+  {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
-    if (error == 0) {
+    if (error == 0)
+    {
       Serial.print("I2C device found at address 0x\n");
-      if (address<16) {
+      if (address < 16)
+      {
         Serial.print("0");
       }
-      Serial.println(address,HEX);
+      Serial.println(address, HEX);
       nDevices++;
     }
-    else if (error==4) {
+    else if (error == 4)
+    {
       Serial.print("Unknow error at address 0x\n");
-      if (address<16) {
+      if (address < 16)
+      {
         Serial.print("0");
       }
-      Serial.println(address,HEX);
-    }    
+      Serial.println(address, HEX);
+    }
   }
-  if (nDevices == 0) {
+  if (nDevices == 0)
+  {
     Serial.println("No I2C devices found\n");
   }
-  else {
+  else
+  {
     Serial.println("done\n");
   }
   delay(5000);
 }
 
-
-void Main::demo_edika(){
+void Main::demo_edika()
+{
 
   // Devices.lcd.display_logo();
 
@@ -149,7 +199,7 @@ void Main::demo_edika(){
   PIDPompe.setCumulStartFactor(0.8);
   while(millis() - startPreInf < 18000){
   
-    float pumpAdjust = PIDPompe.tick(Devices.pressureSensor.get_pressure());
+    float pumpAdjust = PIDPompe.tick(Devices.pressureSensor.read());
     printf("Factor: %.2f \n", pumpAdjust);
 
     Devices.pump.send_command((int) (110 + pumpAdjust));
@@ -229,7 +279,7 @@ void Main::demo_edika(){
   //     break;
   //   }
   // }
-  bool on = true;
+  bool IsOn = true;
   float p_verin = 8.0;
   float i_verin = 0.006;
   float d_verin = 0.06;
@@ -253,15 +303,15 @@ void Main::demo_edika(){
       }
     }
     
-    float speedAdjust = PIDVerin.tick(Devices.pressureSensor.get_pressure());
+    float speedAdjust = PIDVerin.tick(Devices.pressureSensor.read());
 
-    if(speedAdjust == 0.0 && Devices.pressureSensor.get_pressure() > 9.5){
-      on = false;
+    if(speedAdjust == 0.0 && Devices.pressureSensor.read() > 9.5){
+      IsOn = false;
     }else{
-      on = true;
+      IsOn = true;
     }
 
-    Devices.verin.send_CAN(0.0f, 20.0 + speedAdjust, 3.4, 0, on);
+    Devices.verin.send_CAN(0.0f, 20.0 + speedAdjust, 3.4, 0, IsOn);
   }
   Devices.testSSR.set(false);
   long lowering_end = millis();
@@ -276,221 +326,97 @@ void Main::demo_edika(){
     delay(100);
   }
   delay(2000);
-  Serial.printf("Ending weight: %.2f", Devices.loadCell.get_load(10));
+  Serial.printf("Ending weight: %.2f", Devices.loadCell.read(10));
 
   Serial.println("Execution done.");
-  delay(900000);
+  // delay(900000);
 }
 
-// BACKUP
-// Serial.println("3...");
-//   delay(800);
-//   Serial.println("2...");
-//   delay(800);
-//   Serial.println("1...");
-//   delay(800);
-//   Serial.println("0!!!!!!!!!!!!!!!!!!!!!");
+int _counter = 0;
+void Main::test_ble()
+{
+  BLE::update_characteristic("Test", _counter++);
+  Serial.println(_counter);
+}
 
-//   // Verin Up
-//   Serial.println("PUTTING THE VERIN UP");
+void Main::test_user_action()
+{
+  std::string ua = "StartApp";
+  std::string result = "";
 
-//   Devices.verin.wake_up();
+  if (!BLE::user_action_requested(ua))
+    BLE::request_user_action(ua);
 
-//   uint8_t ms = millis();
-//   while(millis() - ms < 20000){
-//     Serial.println("COCK");
-//     Devices.verin.send_CAN(112.0f);
-//     delay(100);
-//   }
-//   Serial.println("SUCKER!");
+  Serial.printf("User action requested: %s\n", BLE::user_action_requested(ua) ? "YAS QUEEN" : "NAH FAM");
+  bool received = BLE::try_get_user_action_result(ua, result);
 
-//   delay(7500);
+  if (received)
+  {
+    Serial.printf("Value received: %s\n", result.c_str());
+  }
+  else
+  {
+    Serial.println("Waiting for user action...");
+  }
+}
 
-//   // 3 way valve open (SSR)
-//   Serial.println("OPENING LA VALVE 3 FACONS");
+bool Main::wait_for_user_action(std::string ua)
+{
+  // std::string ua = "StartApp";
+  std::string result = "";
 
 //   Devices.testSSR.set(true);
 
-//   // Pump x secondes
-//   Serial.println("PUMP PUMP PUMP PUMP PIUMP PUMP PUMP PUMP");
+  if (!BLE::user_action_requested(ua))
+    BLE::request_user_action(ua);
 
-//   Devices.pump.send_command(150);
-//   delay(8000);
-//   // Devices.pump.stop();
+  return false;
+}
 
-//   // delay(100);
-
-//   Devices.pump.send_command(30);
-
-//   // Devices.pump.send_command(62.5);
-//   // delay(2500);
-//   // Devices.pump.stop();
-
-//   // Verin Down / SSR OFF
-//   Serial.println("VERIN DOWN WATCH OUT");
-
-//   Devices.verin.wake_up();
-
-//   // uint8_t ms2 = millis();
-//   int i = 0;
-//   while(true){
-//     // Serial.printf("Pressure: %f Bar\n", Devices.pressureSensor.get_pressure());
-
-//     Devices.verin.send_CAN(0.0f);
-
-//     if(i > 8 && Devices.testSSR.get_state() == true){
-
-//       Serial.println("SHUTTING OFF THE VALVE 3 FACONS");
-//       Devices.testSSR.set(false);
-//       Devices.pump.stop();
-
-//     }
-
-//     if(i++ > 200)
-//       break;
-
-//     delay(100);
-//   }
-
-
-//   i = 0;
-//   while(true){
-//     // Serial.printf("Pressure: %f Bar\n", Devices.pressureSensor.get_pressure());
-
-//     Devices.verin.send_CAN(5.0f);
-
-//     if(i++ > 20)
-//       break;
-
-//     delay(100);
-//   }
-
-//   Serial.println("THE END.");
-//   delay(100000);
-
-
-void Main::run(void)
+float _floatCounter = 0.0f;
+void Main::test_ble_float()
 {
-  // Serial.println("In main::run()...");
+  _floatCounter += 0.33;
+  BLE::update_characteristic("TestFloat", (float)sin(_floatCounter));
+  Serial.println(_floatCounter);
+}
 
-  if(!setup_success){
-    Serial.println("WARNING - Cannot run main loop since main::setup() has not succeeded yet.");
-    return;
+int state_counter = 0;
+int state_counter2 = 0;
+void Main::test_ble_state()
+{
+  if (state_counter2 % 3 == 0)
+  {
+    state_counter++;
   }
+  state_counter2++;
 
-  // Devices.pressureSensor.get_pressure();
-  // delay(500);
+  BLE::update_characteristic("CurrentState", state_counter);
 
-  demo_edika();
+  if (state_counter > 12)
+    state_counter = 0;
 
-  // delay(5000);
-
-  // Serial.println("Setting SSR and 3 way ON");
-  // Devices.testSSR.set(true);
-  // delay(500);
-  // Devices.pump.send_command(125);
-
-  // delay(7000);
-
-  // Serial.println("Setting SSR and 3 way OF");
-
-
-  // Devices.pump.stop();
-  // delay(500);
-  // Devices.testSSR.set(false);
-
-  // Serial.println("OVER");
-
-  // delay(999999);
-
-  // ==== Controller ==== 
-  // controller.execute();
-
-  // ==== LoadCell ==== 
-  // Devices.loadCell.zero();
-  // float l = Devices.loadCell.get_load();
-  // Serial.println(l);
-  // Devices.loadCell.test_read();
-
-  // ==== Thermocouple ==== 
-  // Devices.thermocouple.test_read();
-
-  // ==== LCD ==== 
-  // scan_for_I2C();
-  // Devices.lcd.test_display();
-
-  // ==== Pressure Sensor ==== 
-  // Devices.pressureSensor.get_pressure();
+  Serial.println(state_counter);
 }
 
-esp_err_t Main::setup()
+
+float _loadCounter = 0.0f;
+void Main::test_ble_load()
 {
-  esp_err_t status {ESP_OK};
-
-  Serial.println("===== Main Setup. =====");
-
-  Devices = _Devices::getInstance();
-  status |= Devices.init();
-
-  Serial.println("DEBUG - Main::setup() - Loading configuration");
-  // _Configuration& config = _Configuration::getInstance();
-  // config.loadConfig(config_map.at(CONFIG::Default));
-
-  // ===== LoadCell ===== 
-  // status |= Devices.loadCell.init();
-  // if(ESP_OK != status){
-  //   Serial.println("ERROR - Main::Setup() - Loadcell setup failed.");
-  //   return status;
-  // }
-
-  // Devices.loadCell.set(true);
-  // Devices.loadCell.calibrate(451.9166584);
-  // Devices.loadCell.zero();
-
-  // ===== Thermocouple ===== 
-  // No init needed
-
-  // ===== LCD ===== 
-  // status |= Devices.lcd.init(true);
-  // if(ESP_OK != status){
-  //   Serial.println("ERROR - Main::Setup() - LCD setup failed.");
-  //   return status;
-  // }
-
-  // ===== Pressure Sensor =====
-  // status |= Devices.pressureSensor.init();
-  // if(ESP_OK != status){
-  //   Serial.println("ERROR - Main::Setup() - Failed to init pressure sensor's adc.");
-  //   return status;
-  // }
-
-  // ===== Pump controller =====
-  // status |= Devices.pump.init();
-  // if(ESP_OK != status){
-  //   Serial.println("ERROR - Main::Setup() - Failed to init pump.");
-  //   return status;
-  // }
-
-  // status |= Devices.testSSR.init();
-  // if(ESP_OK != status){
-  //   Serial.println("ERROR - Main::Setup() - Failed to init SSR.");
-  //   return status;
-  // }
-
-  controller.clear_history();
-
-  // Old stuff
-  // status |= pressureSensor.init();
-  // status |= analogReadTestPin.init();
-
-  // analogReadTestPin.set(true);
-
-  // ble_pressure.add_characteristic("Test", BLECharacteristic::PROPERTY_READ);
-  // ble_pressure.update_characteristic("Test", "this is a test value");
-
-  //Adafruit_GrayOLED LED(1, 128, 64, twi_p, -1, 400000, 100000);
-
-  // LED = Adafruit_GrayOLED(1, 64, 128, twi_p, -1, 400000, 100000);
-  setup_success = ESP_OK == status;
-  return status;
+  _loadCounter += 0.33;
+  if (_loadCounter >= 100)
+    _loadCounter = 0;
+  BLE::update_characteristic("Load", _loadCounter);
+  Serial.println(_loadCounter);
 }
+
+float _tempCounter = 0.0f;
+void Main::test_ble_temp()
+{
+  _tempCounter += 0.33;
+  if (_tempCounter >= 100)
+    _tempCounter = 0;
+  BLE::update_characteristic("Load", _tempCounter);
+  Serial.println(_tempCounter);
+}
+

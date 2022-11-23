@@ -20,7 +20,7 @@
 #define LOADCELL_SCK_PIN 14
 
 // Thermocouple
-#define THERMO_VCC 4
+#define THERMO_VCC 33
 #define THERMO_CS_PIN 5
 #define THERMO_SCK_PIN 18
 #define THERMO_MISO_PIN 19
@@ -54,9 +54,6 @@ class _Devices: public DeviceBase{
         return instance;
     }
 
-    // _Devices(_Devices const&)        = delete;
-    // void operator=(_Devices const&)  = delete;
-
     virtual esp_err_t init();
 
     static hx711_t loadCell;
@@ -70,8 +67,4 @@ class _Devices: public DeviceBase{
     private:
     static DeviceBase* init_list[];
     _Devices() {}
-    // _Devices(_Devices const&);       // Don't Implement
-    // void operator=(_Devices const&); // Don't implement
 };
-
-// static _Devices Devices;

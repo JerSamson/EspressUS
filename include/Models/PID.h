@@ -25,7 +25,6 @@ public:
   void setDerivativeBounded(bool bounded);
   T getMaxIntegralCumulation();
   T getIntegralCumulation();
-  Controller ctrl;
 
   void setOutputBounded(bool bounded);
   bool isOutputBounded();

@@ -1,19 +1,22 @@
 #pragma once
 
+#include <Arduino.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include <SPI.h>
+#include <string> 
+#include <sstream> 
 #include <Adafruit_GFX.h>
 #include <Wire.h>
 #include "HX711.h"
 
 #include "./Models/Gpio/gpio.h"
-#include "./Models/BLE/BLE_PressureService.h"
-#include "./Models/BLE/BLE_base.h"
+#include "./Models/BLE.h"
 #include "./Models/Controller.h"
-
 #include "./Devices/Devices.h"
+#include "patch.h"
 
 #define pdSECOND pdMS_TO_TICKS(1000)
 
@@ -24,6 +27,19 @@ private:
 public:
     esp_err_t setup(void);
     void demo_edika();
+    void demo_tech();
+    void test_devices_freq();
+
+    void test_ble();
+    void test_ble_float();
+    void test_ble_state();
+    void test_ble_load();
+    void test_ble_temp();
+    void test_ble_dynamic_plot();
+    void test_user_action();
+    
+    bool wait_for_user_action(std::string ua = "StartApp");
+
     void run(void);
 
     _Devices& Devices = _Devices::getInstance();
@@ -31,25 +47,7 @@ public:
     // Controller
     Controller controller = Controller();
 
-    // Test methods
-
-        // BLE::BLE_Pressure ble_pressure;
-        // uint8_t i = decltype(i)(1);
-        // uint16_t w = 128;
-        // uint16_t h = 64;
-        // uint8_t i = 1;
-        // uint16_t w = 128;
-        // uint16_t h = 64;
-
-        // GpioOuput test
-        // void blink(void); 
-        // Gpio::GpioOutput led{GPIO_NUM_5};
-
-        // GpioADC test 
-        // Gpio::GpioADC pressureSensor{GPIO_NUM_34, ADC1_CHANNEL_6, ADC_WIDTH_12Bit, ADC_11db};
-        // Gpio::GpioOutput analogReadTestPin{GPIO_NUM_26};
-
-        // float read_pressure(void); 
+    // BLE ble = BLE();
 
     Main(/* args */);
     ~Main();

@@ -7,60 +7,222 @@ Controller::Controller(){
     clear_history();
 }
 
-
-State Controller::get_next_state(){
-    if(ESP_OK != status){
-        return error_state;
-    }
-
-    for( unsigned int i = 0; i < sizeof(current_state.transitions)/sizeof(current_state.transitions[0]); i = i + 1 ){
-        if(current_state.transitions[i].condition == nullptr){
-            Serial.println("ERROR - State Transition pointer is null!");
-            continue;;
-        }
-        if((*current_state.transitions[i].condition)()){
-            Serial.print("Changing state to:");
-            return state_map.at(current_state.transitions[i].next_state);
-        }
-    }
-
-    return current_state;
-}
-
 esp_err_t Controller::execute(){
-    // if(!Configuration.is_valid()){
-    //     Serial.println("ERROR - Controller::execute - Invalid configuration.");
-    //     status = ESP_ERR_INVALID_STATE;
-    //     return status;
-    // }
+    if(!Configuration.is_valid()){
+        Serial.println("ERROR\t- Controller::execute - Invalid configuration.");
+        status = ESP_ERR_INVALID_STATE;
+        return status;
+    }
 
-    Serial.println("In execute()...");
+    // Get operation mode
+    operation_mode = BLE::tryGetCharacteristic("OperationMode")->getValue() == "0" ? OperationMode::AUTO : OperationMode::MANUAL;
 
-    // if(ESP_OK == status){
+    // OperationMode::MANUAL
+    if(operation_mode == MANUAL){
+        set_state(MANUAL_STATE);
+    }
+
+
+    // OperationMode::AUTO 
     if(first_loop){
-        Serial.println("First execute loop, executing state action...");
+        Serial.printf("INFO\t- Controller::execute() - current state: '%s'\n", ToString(current_state));
+    }
 
-        if(current_state.action == nullptr){
-            Serial.println("ERROR - State Action pointer is null!");
-            return ESP_FAIL;
+    STATES entry_state = current_state;
+
+    switch (current_state)
+    {
+    case WAIT_CLIENT:
+        // Actions
+        status = wait_client_action();
+
+        // Transitions
+        if(ESP_OK != status)               {set_state(ERROR);}
+        else if(wait_client_transition())  {
+            if(last_state != WAIT_CLIENT){  // Connection was lost during a state. (Resume)
+                set_state(last_state);}
+            else{                           // Initial connection established
+                set_state(IDLE);}
         }
+        break;
 
-        status |= (*current_state.action)();
-        // status |= current_state.action();
-        // status |= std::__invoke(current_state.action);
+    case IDLE:
+        // Actions
+        status = idle_action();
+
+        // Transitions
+        if(ESP_OK != status)    {set_state(ERROR);}
+        else if(idle_to_init()) {set_state(INIT);}
+        break;
+
+    case INIT:
+        // Actions
+        status = init_action();
+
+        // Transitions
+        if(ESP_OK != status)        {set_state(ERROR);}
+        else if(init_to_heating())  {set_state(HEATING);}
+        break;
+
+    case HEATING:
+        // Actions
+        status = heating_action();
+
+        // Transitions
+        if(ESP_OK != status)                {set_state(ERROR);}
+        else if(heating_to_fill_boiler())   {set_state(FILL_BOILER);}
+        else if(heating_to_ready())         {set_state(READY);}
+        break;
+    
+    case FILL_BOILER:
+        // Actions
+        status = fill_boiler_action();
+
+        // Transitions
+        if(ESP_OK != status)                {set_state(ERROR);}
+        else if(fill_boiler_to_heating())   {set_state(HEATING);}
+        break;
+
+    case READY:
+        // Actions
+        status = ready_action();
+
+        // Transitions
+        if(ESP_OK != status)            {set_state(ERROR);}
+        else if(ready_to_fill_boiler()) {set_state(FILL_BOILER);}
+        else if(ready_to_verin_up())    {set_state(VERIN_UP);}
+        break;
+
+    case VERIN_UP:
+        // Actions
+        status = verin_up_action();
+
+        // Transitions
+        if(ESP_OK != status)                {set_state(ERROR);}
+        else if(verin_up_to_fill_head())    {set_state(FILLING_HEAD);}
+        break;
+
+    case FILLING_HEAD:
+        // Actions
+        status = filling_head_action();
+
+        // Transitions
+        if(ESP_OK != status)            {set_state(ERROR);}
+        else if(fill_head_to_extract()) {set_state(EXTRACT);}
+        break;
+
+    case EXTRACT:
+        // Actions
+        status = extract_action();
+
+        // Transitions
+        if(ESP_OK != status)            {set_state(ERROR);}
+        else if(extract_to_choke())     {set_state(CHOKE);}
+        else if(extract_to_enjoy())     {set_state(DONE);}
+        break;
+
+    case DONE:
+        // Actions
+        status = done_action();
+
+        // Transitions
+        if(ESP_OK != status)            {set_state(ERROR);}
+        else if(enjoy_to_dripping())    {set_state(DRIPPING);}
+        break;
+
+    case CHOKE:
+        // Actions
+        status = choke_action();
+
+        // Transitions
+        if(ESP_OK != status)            {set_state(ERROR);}
+        else if(choke_to_flush())       {set_state(FLUSH);}
+        else if(choke_to_ready())       {set_state(READY);}
+        break;
+
+    case DRIPPING:
+        // Actions
+        status = dripping_action();
+
+        // Transitions
+        if(ESP_OK != status)            {set_state(ERROR);}
+        else if(dripping_to_flush())    {set_state(FLUSH);}
+        else if(dripping_to_ready())    {set_state(READY);}
+        break;
+
+    case FLUSH:
+        // Actions
+        status = flush_action();
+
+        // Transitions
+        if(ESP_OK != status)            {set_state(ERROR);}
+        else if(flush_to_ready())       {set_state(READY);}
+        break;
+
+    case ERROR:
+        Serial.printf("ERROR\t- Controller::execute() - In error state: (%s)\n", err_log);
+        break;
+
+    case MANUAL_STATE:
+        status = manual_action();
+
+        // Transitions
+        if(ESP_OK != status)                            {set_state(ERROR);}
+        else if(operation_mode == OperationMode::AUTO)  {
+            set_state(WAIT_CLIENT);    
+            last_state = WAIT_CLIENT; // Prevents code to resume Manual_State once connection is validated
+        }
+        break;
+
+    default:
+        int state_num = (static_cast<int>(current_state));
+        sprintf(err_log, "Controller was in an unknown state (%d)", state_num);
+        set_state(ERROR);
+        break;
+    }
+
+    // Same state as start of execute()
+    if(current_state == entry_state){
         first_loop = false;
     }
 
-    State last_state = current_state;
-    current_state = get_next_state();
-
-    if(last_state.state != current_state.state){
-        first_loop = true;
+    // Connection to client lost
+    if(current_state != WAIT_CLIENT && connection_lost()){
+        set_state(WAIT_CLIENT);
     }
-    // }
+
+    // Error was resolved - handle next state based on previous state
+    if(current_state == ERROR && err_resolved){
+        status = ESP_OK;
+        switch (last_state)
+        {
+            // TODO: Handle other cases
+            default:
+                set_state(WAIT_CLIENT);
+                break;
+        }
+    }
 
     return status;
 }
+
+void Controller::set_state(STATES state){
+    if(state == ERROR){err_resolved=false;}
+    if(current_state != state){
+        last_state = current_state;
+        current_state = state;
+        first_loop = true;
+        BLE::update_characteristic("CurrentState", state);
+        Serial.printf("INFO\t- Controller::set_state() - Switching from state '%s' to '%s'\n\n", ToString(last_state), ToString(current_state));
+    }else{
+        first_loop = false;
+    }
+}
+
+bool Controller::connection_lost(){
+    return BLE::n_client == 0;
+}
+
 
 void Controller::reset_time(){
     begin = std::chrono::steady_clock::now();
@@ -70,9 +232,9 @@ int64_t Controller::get_ellapsed_ms(std::chrono::steady_clock::time_point since)
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - since).count();
 }
 
-double Controller::get_ellapsed_ms(std::chrono::_V2::system_clock::time_point since){
-    return std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-since).count() / 1000.0;
-}
+// double Controller::get_ellapsed_ms(std::chrono::_V2::system_clock::time_point since){
+//     return std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-since).count() / 1000.0;
+// }
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 void Controller::debug_print_map(std::map<uint64_t, float> map){
@@ -84,119 +246,77 @@ void Controller::debug_print_map(std::map<uint64_t, float> map){
     }
 }
 
-void Controller::update_values(){
+bool Controller::update_value(Sensor sensor, float &current_value, std::map<uint64_t, float> &value_map, std::map<uint64_t, float> &d_map, std::map<uint64_t, float> &i_map){
+    if(!sensor.is_init()){
+        status = ESP_ERR_INVALID_STATE;
+        sprintf(err_log, "Tried to read uninitialized sensor.");
+        return false;
+    }
 
     uint64_t ellapsed = ms_since_start();
 
-    // Temperature readings
-    Serial.println("INFO - Controller::update_values() - Reading temperature...");
-    if(using_thermo && Devices.thermocouple.is_init()){
-        float last_temp = temp;
-        uint64_t last_ellapsed = 0;
-
-        if(!temp_history.empty()){
-            last_ellapsed = (temp_history.rbegin())->first;
-        }
-
-        // Get and save current temp
-        temp = Devices.thermocouple.get_temp();
-
-        // Valid reading
-        if(temp != -1){
-            temp_history[ellapsed] = temp;
-
-            // Compute and save temp derivative according to last mesured temp
-            if(last_temp != NAN){
-                d_temp_history[ellapsed] = derivate(last_ellapsed, last_temp, ellapsed, temp);
-            }
-
-            // Compute and save temp integral according to last mesured temp
-            float last_i = (i_temp_history.rbegin())->second;
-            float i = integrate(last_ellapsed, last_temp, ellapsed, temp);
-            i_temp_history[ellapsed] = last_i + i;
-        }else{
-            Serial.println("WARNING - Controller::update_values() - Could not get a valid reading from thermocouple.");
-        }
-    }
-    else{
-        Serial.println("WARNING - Controller::update_values() - Could not get temperature since thermocouple is not initialized.");
+    // Get time of last reading, if any
+    uint64_t last_ellapsed = 0;
+    if(!value_map.empty()){
+        last_ellapsed = (value_map.rbegin())->first;
     }
 
-    // Load cell readings
-    Serial.println("INFO - Controller::update_values() - Reading Load cell...");
-    if(using_loadcell && Devices.loadCell.can_read()){
-        float last_load = temp;
-        uint64_t last_ellapsed = 0;
+    // Get and save current value
+    float last_value = current_value;
+    current_value = sensor.read();
 
-        if(!load_history.empty()){
-            last_ellapsed = (load_history.rbegin())->first;
-        }
-
-        // Get and save current load
-        load = Devices.loadCell.get_load();
-        load_history[ellapsed] = load;
-
-        // TODO: No direct way to validate reading...
-
-        // Compute and save derivative according to last mesured load
-        if(last_load != NAN){
-            d_load_history[ellapsed] = derivate(last_ellapsed, last_load, ellapsed, load);
-        }
-
-        // Compute and save load integral according to last mesured load
-        float last_i = (i_load_history.rbegin())->second;
-        float i = integrate(last_ellapsed, last_load, ellapsed, load);
-        i_load_history[ellapsed] = last_i + i;
-    }
-    else{
-        Serial.println("WARNING - Controller::update_values() - Could not get loadCell data since it is either not initialized or inactive.");
+    bool isValueValid = true; // TODO: Validate value according to sensor? Sensor base class method?
+    if(!isValueValid){
+        //TODO: get sensor names
+        Serial.println("WARNING - Controller::update_value() - Could not get a valid reading from sensor.");
+        sprintf(err_log, "Got an invalid sensor reading.");
+        return false;
     }
 
-    // Pressure readings
-    Serial.println("INFO - Controller::update_values() - Reading pressure...");
-    if(using_pressure && Devices.pressureSensor.is_init()){
-        float last_pressure = pressure;
-        uint64_t last_ellapsed = 0;
-        
-        if(!pressure_history.empty()){
-            last_ellapsed = (pressure_history.rbegin())->first;
-        }
+    value_map[ellapsed] = current_value;
 
-        // Get and save current load
-        pressure = Devices.pressureSensor.get_pressure();
-
-        Serial.println("DEBUG - Saving pressure in pressure history map");
-        pressure_history[ellapsed] = pressure;
-
-        // TODO: No direct way to validate reading...
-
-        // Compute and save derivative according to last mesured load
-        Serial.println("DEBUG - Computing pressure derivative");
-        if(last_pressure != NAN){
-            d_pressure_history[ellapsed] = derivate(last_ellapsed, last_pressure, ellapsed, pressure);
-
-            // debug_print_map(i_pressure_history);
-
-            // Compute and save load integral according to last mesured load
-            Serial.println("DEBUG - Computing pressure integral");
-            Serial.printf("i_p_history size: %d\n", i_pressure_history.size());
-            float last_i = (--i_pressure_history.end())->second;
-
-            Serial.printf("last_i: %f\n", last_i);
-            float i = integrate(last_ellapsed, last_pressure, ellapsed, pressure);
-            Serial.printf("I: %f\n", i);
-
-            Serial.printf("new_I: %f\n", (last_i + i));
-
-            Serial.println("DEBUG - saving pressure integral");
-            i_pressure_history[ellapsed] = last_i + i;
-            Serial.println("DEBUG - pressure integral saved");
-        }
+    // Compute and save derivative according to last value
+    if(last_value != NAN){
+        d_map[ellapsed] = derivate(last_ellapsed, last_value, ellapsed, current_value);
     }
-    else{
-        Serial.println("WARNING - Controller::update_values() - Could not get pressure Sensor data since it is either not initialized or inactive.");
+
+    // Compute and save temp integral according to last value
+    // float last_i = (i_map.rbegin())->second;
+    float last_i = (--i_map.end())->second;
+    float i = integrate(last_ellapsed, last_value, ellapsed, current_value);
+    i_map[ellapsed] = last_i + i;
+
+    return true;
+}
+
+bool Controller::update_temp(){
+    bool success = update_value(Devices.thermocouple, temp, temp_history, d_temp_history, i_temp_history);
+    if(success){
+        BLE::update_characteristic("Temp", temp);
+    }
+    return success;
+}
+bool Controller::update_load(){
+    bool success = update_value(Devices.loadCell, load, load_history, d_load_history, i_load_history);
+    if(success){
+        BLE::update_characteristic("Load", load);
+    }
+    return success;
+}
+bool Controller::update_pressure(){
+    bool success = update_value(Devices.pressureSensor, pressure, pressure_history, d_pressure_history, i_pressure_history);
+    if(success){
+        BLE::update_characteristic("Pressure", pressure);
+    }
+    return success;
+}
+
+void Controller::print_once(std::string str){
+    if(first_loop){
+        Serial.println(str.c_str());
     }
 }
+
 
 float Controller::derivate(uint64_t time1, float value1, uint64_t time2, float value2, int time_factor){
     float dvalue = value2 - value1;
@@ -235,472 +355,139 @@ void Controller::clear_history(){
     i_pressure_history.clear();
     i_pressure_history[0] = 0.0f;
 
-    Serial.println("DEBUG - i_pressure_history after clear:");
+    Serial.println("DEBUG\t- i_pressure_history after clear:");
     debug_print_map(i_pressure_history);
 
     Serial.println("CONTROLLER - Data history cleared.");
 }
 
-// ================== STATES ==================
-
-esp_err_t test(){
-    Serial.print("GOFUCKYOURSELF");
-    return ESP_OK;
-}
-
-void Controller::initialize_states(Controller* C){
-
-    // error_state = {
-    //     state: STATES::ERROR,
-    //     transitions: {
-    //         {
-    //             next_state: STATES::IDLE,
-    //             condition: &Controller::error_to_idle
-    //         }
-    //     },
-    //     action: &Controller::error_action
-    // };
-
-    // idle_state = {
-    //     state: STATES::IDLE,
-    //     transitions: {
-    //         {
-    //             next_state: STATES::INIT,
-    //             condition: &Controller::idle_to_init
-    //         }
-    //     },
-    //     action: &test
-    // };    
-
-    // init_state = {
-    //     state: STATES::INIT,
-    //     transitions: {
-    //         {
-    //             next_state: STATES::HEATING,
-    //             condition: &Controller::init_to_heating
-    //         }
-    //     },
-    //     action: &Controller::init_action
-    // };
-
-    heating_state = {
-        state: STATES::HEATING,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: &Controller::heating_to_ready
-            },
-            {
-                next_state: STATES::FILL_BOILER,
-                condition: &Controller::heating_to_fill_boiler
-            }
-        },
-        action: &Controller::heating_action
-    };
-
-    fill_boiler_state = {
-        state: STATES::FILL_BOILER,
-        transitions: {
-            {
-                next_state: STATES::HEATING,
-                condition: &Controller::fill_boiler_to_heating
-            }
-        },
-        action: &Controller::fill_boiler_action
-    };
-
-    ready_state = {
-        state: STATES::READY,
-        transitions: {
-            {
-                next_state: STATES::FILL_BOILER,
-                condition: &Controller::ready_to_fill_boiler
-            },
-            {
-                next_state: STATES::VERIN_UP,
-                condition: &Controller::ready_to_verin_up
-            }
-            // ready_to_fill_boiler,
-            // ready_to_verin_up
-        },
-        action: &Controller::ready_action
-    };
-
-    verin_up_state = {
-        state: STATES::VERIN_UP,
-        transitions: {
-            {
-                next_state: STATES::FILLING_HEAD,
-                condition: &Controller::verin_up_to_fill_head
-            }
-            // verin_up_to_fill_head
-        },
-        action: &Controller::verin_up_action
-    };
-
-    filling_head_state = {
-        state: STATES::FILLING_HEAD,
-        transitions: {
-            {
-                next_state: STATES::EXTRACT,
-                condition: &Controller::fill_head_to_extract
-            }
-            // fill_head_to_extract
-        },
-        action: &Controller::filling_head_action
-    };
-
-    extract_state = {
-        state: STATES::EXTRACT,
-        transitions: {
-            {
-                next_state: STATES::DONE,
-                condition: &Controller::extract_to_enjoy
-            },
-            {
-                next_state: STATES::CHOKE,
-                condition: &Controller::extract_to_choke
-            }
-            // extract_to_enjoy,
-            // extract_to_choke
-        },
-        action: &Controller::extract_action
-    };
-
-    enjoy_state = {
-        state: STATES::DONE,
-        transitions: {
-            {
-                next_state: STATES::DRIPPING,
-                condition: &Controller::enjoy_to_dripping
-            }
-            // enjoy_to_dripping
-        },
-        action: &Controller::done_action
-    };
-
-    choke_state = {
-        state: STATES::CHOKE,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: &Controller::choke_to_ready
-            },
-            {
-                next_state: STATES::FLUSH,
-                condition: &Controller::choke_to_flush
-            }
-            // choke_to_ready,
-            // choke_to_flush
-        },
-        action: &Controller::choke_action
-    };
-
-    dripping_state = {
-        state: STATES::DRIPPING,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: &Controller::dripping_to_ready
-            },
-            {
-                next_state: STATES::FLUSH,
-                condition: &Controller::dripping_to_flush
-            }
-            // dripping_to_ready,
-            // dripping_to_flush
-        },
-        action: &Controller::dripping_action
-    };
-
-    flush_state = {
-        state: STATES::FLUSH,
-        transitions: {
-            {
-                next_state: STATES::READY,
-                condition: &Controller::flush_to_ready
-            }
-            // flush_to_ready
-        },
-        action: &Controller::flush_action
-    };
-
-};
-
-// State error_state = {
-//     state: STATES::ERROR,
-//     transitions: {
-//         {
-//             next_state: STATES::INIT,
-//             condition: &Controller::error_to_idle
-//         }
-//     },
-//     action: &Controller::error_action
-// };
-
-// State idle_state = {
-//     state: STATES::IDLE,
-//     transitions: {
-//         {
-//             next_state: STATES::INIT,
-//             condition: &Controller::idle_to_init
-//         }
-//     },
-//     action: &Controller::idle_action
-// };
-
-// State init_state = {
-//     state: STATES::INIT,
-//     transitions: {
-//         {
-//             next_state: STATES::HEATING,
-//             condition: &Controller::init_to_heating
-//         }
-//     },
-//     action: &Controller::init_action
-// };
-
-// State heating_state = {
-//     state: STATES::HEATING,
-//     transitions: {
-//         {
-//             next_state: STATES::READY,
-//             condition: &Controller::heating_to_ready
-//         },
-//         {
-//             next_state: STATES::FILL_BOILER,
-//             condition: &Controller::heating_to_fill_boiler
-//         }
-//     },
-//     action: &Controller::heating_action
-// };
-
-// State fill_boiler_state = {
-//     state: STATES::FILL_BOILER,
-//     transitions: {
-//         {
-//             next_state: STATES::HEATING,
-//             condition: &Controller::fill_boiler_to_heating
-//         }
-//     },
-//     action: &Controller::fill_boiler_action
-// };
-
-// State ready_state = {
-//     state: STATES::READY,
-//     transitions: {
-//         {
-//             next_state: STATES::FILL_BOILER,
-//             condition: &Controller::ready_to_fill_boiler
-//         },
-//         {
-//             next_state: STATES::VERIN_UP,
-//             condition: &Controller::ready_to_verin_up
-//         }
-//         // ready_to_fill_boiler,
-//         // ready_to_verin_up
-//     },
-//     action: &Controller::ready_action
-// };
-
-// State verin_up_state = {
-//     state: STATES::VERIN_UP,
-//     transitions: {
-//         {
-//             next_state: STATES::FILLING_HEAD,
-//             condition: &Controller::verin_up_to_fill_head
-//         }
-//         // verin_up_to_fill_head
-//     },
-//     action: &Controller::verin_up_action
-// };
-
-// State filling_head_state = {
-//     state: STATES::FILLING_HEAD,
-//     transitions: {
-//         {
-//             next_state: STATES::EXTRACT,
-//             condition: &Controller::fill_head_to_extract
-//         }
-//         // fill_head_to_extract
-//     },
-//     action: &Controller::filling_head_action
-// };
-
-// State extract_state = {
-//     state: STATES::EXTRACT,
-//     transitions: {
-//         {
-//             next_state: STATES::DONE,
-//             condition: &Controller::extract_to_enjoy
-//         },
-//         {
-//             next_state: STATES::CHOKE,
-//             condition: &Controller::extract_to_choke
-//         }
-//         // extract_to_enjoy,
-//         // extract_to_choke
-//     },
-//     action: &Controller::extract_action
-// };
-
-// State enjoy_state = {
-//     state: STATES::DONE,
-//     transitions: {
-//         {
-//             next_state: STATES::DRIPPING,
-//             condition: &Controller::enjoy_to_dripping
-//         }
-//         // enjoy_to_dripping
-//     },
-//     action: &Controller::done_action
-// };
-
-// State choke_state = {
-//     state: STATES::CHOKE,
-//     transitions: {
-//         {
-//             next_state: STATES::READY,
-//             condition: &Controller::choke_to_ready
-//         },
-//         {
-//             next_state: STATES::FLUSH,
-//             condition: &Controller::choke_to_flush
-//         }
-//         // choke_to_ready,
-//         // choke_to_flush
-//     },
-//     action: &Controller::choke_action
-// };
-
-// State dripping_state = {
-//     state: STATES::DRIPPING,
-//     transitions: {
-//         {
-//             next_state: STATES::READY,
-//             condition: &Controller::dripping_to_ready
-//         },
-//         {
-//             next_state: STATES::FLUSH,
-//             condition: &Controller::dripping_to_flush
-//         }
-//         // dripping_to_ready,
-//         // dripping_to_flush
-//     },
-//     action: &Controller::dripping_action
-// };
-
-// State flush_state = {
-//     state: STATES::FLUSH,
-//     transitions: {
-//         {
-//             next_state: STATES::READY,
-//             condition: &Controller::flush_to_ready
-//         }
-//         // flush_to_ready
-//     },
-//     action: &Controller::flush_action
-// };
-
 // ================== ACTIONS ==================
 
-    esp_err_t Controller::idle_action(){
-        Serial.println("Idle action");
-        // Devices.lcd.display_text("IDLE");
-        // Serial.println("Setting SSR and 3 way ON");
-        // Devices.testSSR.set(true);
-        // delay(500);
-        // Devices.pump.send_command(125);
+    esp_err_t Controller::manual_action(){
+        bool heating = BLE::tryGetCharacteristic("ManualHeat")->getValue() == "1";
+        bool flushing = BLE::tryGetCharacteristic("ManualFlush")->getValue() == "1";
+        bool verinUp = BLE::tryGetCharacteristic("ManualVerinUp")->getValue() == "1";
+        bool verinDown = BLE::tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
 
-        return ESP_OK;  
+        if(heating){
+            Serial.println("INFO\t- Manual command received - HEATING");
+        }
+        if(flushing){
+            Serial.println("INFO\t- Manual command received - FLUSHING");
+        }
+        if(verinUp){
+            Serial.println("INFO\t- Manual command received - VERIN UP");
+        }
+        if(verinDown){
+            Serial.println("INFO\t- Manual command received - VERIN DOWN");
+        }
+        return status;
+    }
+
+    esp_err_t Controller::wait_client_action(){
+        print_once("DEBUG\t- WAIT CLIENT ACTION FIRST LOOP");
+        print_once("Waiting for at least one connected client...");
+        return status;
+    }
+
+    esp_err_t Controller::idle_action(){
+        print_once("DEBUG\t- IDLE ACTION FIRST LOOP");
+
+        // Request user action to start app
+        if(first_loop){
+            if(!BLE::request_user_action("StartApp")){
+                sprintf(err_log, "Could not request user action 'StartApp'. Check logs for more details");
+                status = ESP_ERR_INVALID_ARG;
+            }
+        }
+
+        return status;  
     }
     
     esp_err_t Controller::init_action(){
-        // Devices.lcd.display_text("INIT");
-
-        Serial.println("Init Action");
-
-        // Serial.println("Setting SSR and 3 way OF");
-
-
-        // Devices.pump.stop();
-        // delay(500);
-        // Devices.testSSR.set(false);
-
-        // Serial.println("OVER");
-
-        return ESP_OK;  
+        print_once("DEBUG\t- INIT ACTION FIRST LOOP");
+        return status;  
     }
     
     esp_err_t Controller::heating_action(){
-        Devices.lcd.display_text("HEATING");
+        print_once("DEBUG\t- HEATING ACTION FIRST LOOP");
 
         // Activate boiler SSR
 
-        return ESP_OK;  
+        return status;  
     }
     
     esp_err_t Controller::fill_boiler_action(){
-        Devices.lcd.display_text("FILL BOILER");
-        return ESP_OK;  
+        // Devices.lcd.display_text("FILL BOILER");
+        print_once("DEBUG\t- FILL BOILER ACTION FIRST LOOP");
+
+        return status;  
     }
     
     esp_err_t Controller::ready_action(){
-        Devices.lcd.display_text("READY");
-        return ESP_OK;  
+        print_once("DEBUG\t- READY ACTION FIRST LOOP");
+        // Devices.lcd.display_text("READY");
+        return status;  
     }
     
     esp_err_t Controller::verin_up_action(){
-        Devices.lcd.display_text("VERIN UP");
-        return ESP_OK;  
+        print_once("DEBUG\t- VERIN UP ACTION FIRST LOOP");
+        // Devices.lcd.display_text("VERIN UP");
+        return status;  
     }
     
     esp_err_t Controller::filling_head_action(){
-        Devices.lcd.display_text("FILLING HEAD");
-        return ESP_OK;  
+        print_once("DEBUG\t- FILLING HEAD ACTION FIRST LOOP");
+        // Devices.lcd.display_text("FILLING HEAD");
+        return status;  
     }
     
     esp_err_t Controller::extract_action(){
-        Devices.lcd.display_text("EXTRACT");
-        return ESP_OK;  
+        print_once("DEBUG\t- EXTRACT ACTION FIRST LOOP");
+        // Devices.lcd.display_text("EXTRACT");
+        return status;  
     }
     
     esp_err_t Controller::done_action(){
-        Devices.lcd.display_text("DONE");
-        return ESP_OK;  
+        print_once("DEBUG\t- DONE ACTION FIRST LOOP");
+        // Devices.lcd.display_text("DONE");
+        return status;  
     }
     
     esp_err_t Controller::choke_action(){
-        Devices.lcd.display_text("CHOKE");
-        return ESP_OK;  
+        print_once("DEBUG\t- CHOKE ACTION FIRST LOOP");
+        // Devices.lcd.display_text("CHOKE");
+        return status;  
     }
     
     esp_err_t Controller::dripping_action(){
-        Devices.lcd.display_text("DRIPPING");
-        return ESP_OK;  
+        print_once("DEBUG\t- DRIPPING ACTION FIRST LOOP");
+        // Devices.lcd.display_text("DRIPPING");
+        return status;  
     }
     
     esp_err_t Controller::flush_action(){
-        Devices.lcd.display_text("FLUSH");
-        return ESP_OK;  
+        print_once("DEBUG\t- FLUSH ACTION FIRST LOOP");
+        // Devices.lcd.display_text("FLUSH");
+        return status;  
     }
     
     esp_err_t Controller::error_action(){
-        Devices.lcd.display_text("ERROR");
-        return ESP_OK;  
+        print_once("DEBUG\t- ERROR ACTION FIRST LOOP");
+        // Devices.lcd.display_text("ERROR");
+        return status;  
     }
 
 
 // ================== TRANSITIONS ==================
 
-    bool Controller::idle_to_init(){
-        // Water level check
-        // Load cell memory is not full?
-        float load =  Devices.loadCell.get_load();
-        Serial.printf("Load:%f \n", load);
-        return load > 50;
+    bool Controller::wait_client_transition(){
+        return BLE::n_client() > 0;
+    }
 
-        // return false;
+    bool Controller::idle_to_init(){
+        std::string result;
+        return BLE::try_get_user_action_result("StartApp", result);
     }
 
     bool Controller::init_to_heating(){
@@ -709,7 +496,7 @@ void Controller::initialize_states(Controller* C){
     }
 
     bool Controller::heating_to_ready(){
-        return Devices.thermocouple.get_temp() >= Configuration.target_temp;
+        return Devices.thermocouple.read() >= Configuration.target_temp;
     }
 
     bool Controller::heating_to_fill_boiler(){

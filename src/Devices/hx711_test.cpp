@@ -8,8 +8,7 @@ hx711_t::hx711_t(uint8_t _dout, uint8_t _sck, gpio_num_t _alim_pin) : dout(_dout
 }
 
 esp_err_t hx711_t::init(){
-    Serial.println("INFO - hx711_t::init() - Initializing load cell...");
-    // Serial.begin(115200);
+    Serial.println("INFO\t- hx711_t::init() - Initializing load cell...");
 
     esp_err_t status {ESP_OK};
 
@@ -18,7 +17,7 @@ esp_err_t hx711_t::init(){
     status |= alim.set(true);
 
     if(ESP_OK != status){
-      Serial.println("ERROR - hx711_t::init() - Could not initialize loadCell's alimentation gpio.");
+      Serial.println("ERROR\t- hx711_t::init() - Could not initialize loadCell's alimentation gpio.");
       init_success = false;
       return status;
     }
@@ -29,6 +28,15 @@ esp_err_t hx711_t::init(){
 
     init_success = true;
     return status;
+}
+
+float hx711_t::read(int readings){
+    if(!is_active() || !is_init() || !scale.is_ready()){
+    Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is either inactive or not initialized.");
+    return 0.0;
+  }
+
+  return scale.get_units(readings);
 }
 
 long hx711_t::zero(){
@@ -52,14 +60,14 @@ void hx711_t::calibrate(float calibration_factor){
   scale.set_scale(calibration_factor);
 }
 
-float hx711_t::get_load(int readings){
-  if(!is_active() || !is_init() || !scale.is_ready()){
-    Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is either inactive or not initialized.");
-    return 0.0;
-  }
+// float hx711_t::get_load(int readings){
+//   if(!is_active() || !is_init() || !scale.is_ready()){
+//     Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is either inactive or not initialized.");
+//     return 0.0;
+//   }
 
-  return scale.get_units(readings);
-}
+//   return scale.get_units(readings);
+// }
 
 void hx711_t::test_read(){
   if(!is_active() || !is_init() || !scale.is_ready()){

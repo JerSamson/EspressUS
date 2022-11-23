@@ -20,7 +20,7 @@ DeviceBase* _Devices::init_list[10]  = {
 
 esp_err_t _Devices::init(){
     esp_err_t status{ESP_OK};
-    Serial.println("INFO - _Devices::init() - Initializing all devices in init_list");
+    Serial.println("INFO\t- _Devices::init() - Initializing all devices in init_list");
     for (DeviceBase* device : init_list) {
         if(device != nullptr && !device->is_init()){
             status |= device->init();
@@ -29,7 +29,7 @@ esp_err_t _Devices::init(){
 
     init_success = status == ESP_OK;
 
-    Serial.printf("%s - _Devices::init() - Initialization finished. %ss\n", init_success ? "INFO" : "ERROR", init_success ? "SUCCEEDED" : "FAILED" );
+    Serial.printf("%s - _Devices::init() - Initialization finished. %s\n", init_success ? "INFO" : "ERROR", init_success ? "SUCCEEDED" : "FAILED" );
 
     return status;
 }

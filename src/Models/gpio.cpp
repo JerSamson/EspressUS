@@ -72,7 +72,7 @@ namespace Gpio
         if(ESP_OK == status){
             Serial.printf("GpioADC initialized:\n\tpin: %d\n\twidth: %d\n\tatten: %d\n", _pin, _width, _attenuation);
         }else{
-            Serial.println("ERROR - GpioADC::init() - Could not initialize ADC");
+            Serial.println("ERROR\t- GpioADC::init() - Could not initialize ADC");
         }
 
         return status;

@@ -3,9 +3,7 @@
 CAN_device_t CAN_cfg;
 
 esp_err_t VerinCan::init(){
-
     esp_err_t status{ESP_OK};
-
     Serial.println("Initializing CANOpen comm");
 
     //initialize CAN Module
@@ -14,17 +12,16 @@ esp_err_t VerinCan::init(){
     }
 
     setup_frame_CAN();
-    
     init_success = status == ESP_OK;
-
     return status;
 }
 
 esp_err_t VerinCan::wake_up(){
     esp_err_t status{ESP_OK};
 
-    Serial.println("INFO - VerinCan::Wake_up() - Waking up the verin");
+    Serial.println("INFO\t- VerinCan::Wake_up() - Waking up the verin");
     status |= ESP32Can.CANWriteFrame(&wake_frame);
+
     delay(100);
     
     return status;
@@ -70,8 +67,10 @@ int VerinCan::receive_CAN(CAN_frame_t rx_frame, controlParam option){
 VerinCan::VerinCan(gpio_num_t rx, gpio_num_t tx){
     CAN_cfg.tx_pin_id = tx;
     CAN_cfg.rx_pin_id = rx;
+
     // start the CAN bus at 500 kbps
     CAN_cfg.speed = CAN_SPEED_500KBPS;
+
     /* create a queue for CAN receiving */
     CAN_cfg.rx_queue = xQueueCreate(10, sizeof(CAN_frame_t));
 }
@@ -79,7 +78,7 @@ VerinCan::VerinCan(gpio_num_t rx, gpio_num_t tx){
 esp_err_t VerinCan::to_CAN(float targetPos, float currentLim, float dutyCycle, int mvtProfile, bool allowMvt)
 {
     if(!init_success){
-        Serial.println("ERROR - Send_CAN() - Init not done");
+        Serial.println("ERROR\t- Send_CAN() - Init not done");
         return ESP_ERR_INVALID_STATE;
     }
 
@@ -105,10 +104,9 @@ esp_err_t VerinCan::to_CAN(float targetPos, float currentLim, float dutyCycle, i
 
     // Movement Profile, 0: Normal, 1: Precision, 2: Step
     send_frame.data.u8[6] = mvtProfile; //0x00;
-
+    
     // Allow Movement (bool)
     send_frame.data.u8[7] = allowMvt; //0x01;
-
     return ESP_OK;
 }
 
@@ -119,10 +117,8 @@ esp_err_t VerinCan::setup_frame_CAN()
     wake_frame.FIR.B.DLC = 2;
     wake_frame.data.u8[0] = 0x01;
     wake_frame.data.u8[1] = 0x00;
-    
     send_frame.FIR.B.FF = CAN_frame_std;
     send_frame.MsgID = 0x21B;
     send_frame.FIR.B.DLC = 8;
-
     return ESP_OK;
 }

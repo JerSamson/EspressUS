@@ -23,6 +23,8 @@ std::map<std::string, std::string> BLE::characteristic_uuid_map = {
     {"Load",            LOAD_CHAR_UUID},
 
     {"OperationMode",   OP_MODE_CHAR_UUID},
+    {"Recipe",          RECIPE_CHAR_UUID},
+
     {"ManualHeat",      MANUAL_HEAT_CHAR_UUID},
     {"ManualFlush",     MANUAL_FLUSH_CHAR_UUID},
     {"ManualVerinUp",   MANUAL_V_UP_CHAR_UUID},
@@ -38,6 +40,8 @@ std::map<std::string, uint32_t> BLE::characteristic_property_map = {
     {"Load",            BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
 
     {"OperationMode",   BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
+    {"Recipe",          BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY},
+
     {"ManualHeat",      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualFlush",     BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualVerinUp",   BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
@@ -53,6 +57,8 @@ std::map<std::string, CHARAC_TYPE> BLE::characteristic_type_map = {
     {"Load",            DATA},
 
     {"OperationMode",   DATA},
+    {"Recipe",          DATA},
+
     {"ManualHeat",      DATA},
     {"ManualFlush",     DATA},
     {"ManualVerinUp",   DATA},
@@ -306,7 +312,7 @@ void BLE::UserActionCallback::onWrite(BLECharacteristic *pCharacteristic)
     if (rxValue.length() > 0)
     {
 
-        Serial.print("Received U.A Value: ");
+        Serial.print("INFO\t- Received U.A Value: ");
 
         for (int i = 0; i < rxValue.length(); i++)
         {
@@ -320,16 +326,25 @@ void BLE::UserActionCallback::onWrite(BLECharacteristic *pCharacteristic)
 void BLE::DefaultCallback::onWrite(BLECharacteristic *pCharacteristic)
 {
     std::string rxValue = pCharacteristic->getValue();
-
+    std::string uuid = pCharacteristic->getUUID().toString();
     if (rxValue.length() > 0)
     {
-        Serial.printf("INFO\t- onWrite - %s updated to ", pCharacteristic->getUUID().toString().c_str());
+        Serial.printf("INFO\t- onWrite - %s updated to ", uuid.c_str());
 
         for (int i = 0; i < rxValue.length(); i++)
         {
             Serial.print(rxValue[i]);
         }
         Serial.println();
+
+        if(uuid == RECIPE_CHAR_UUID){
+            std::stringstream ss; 
+            int num;
+            ss << rxValue;
+            ss >> num;
+
+            _Configuration::loadConfig((CONFIG)num);
+        }
     }
 }
 

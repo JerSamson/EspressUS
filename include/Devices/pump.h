@@ -22,6 +22,8 @@ class Pump: public DeviceBase{
     const float i_pompe = 14.0;
     const float d_pompe = 0.0;
 
+    bool pumpRunning = false;
+
     public:
     virtual esp_err_t init();
 
@@ -32,6 +34,7 @@ class Pump: public DeviceBase{
 
     esp_err_t send_command(int dutyCycle);
     esp_err_t stop();
+    bool get_state();
 
     // bool is_init(){ return init_success; }
 

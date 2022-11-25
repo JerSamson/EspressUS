@@ -36,7 +36,6 @@ class Controller final{
     int positionVerin = -1;
     float vitesseVerin;
     bool verinOn = true;
-    bool pumpRunning = false;
 
     //debug
     bool using_thermo = false;

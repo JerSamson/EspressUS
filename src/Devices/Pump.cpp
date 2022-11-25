@@ -18,6 +18,12 @@ esp_err_t Pump::send_command(int dutyCycle){
     esp_err_t status{ESP_OK};
     status |= dir_pin.set(false);  
 
+    if(dutyCycle != 0){
+        pumpRunning = true;
+    }else{
+        pumpRunning = false;
+    }
+        
     ledcWrite(pwm_channel, dutyCycle);  
 
     return status;
@@ -28,6 +34,8 @@ esp_err_t Pump::stop(){
         Serial.println("ERROR\t- Pump::stop() - Tried to send command before successful initialization");
         return ESP_ERR_INVALID_STATE;
     }
+
+    pumpRunning = false;
 
     esp_err_t status{ESP_OK};
 
@@ -42,6 +50,9 @@ esp_err_t Pump::stop(){
     return status;
 }
 
+bool Pump::get_state(){
+    return pumpRunning;
+}
 
 esp_err_t Pump::init(){
     Serial.println("INFO\t- Pump::init() - Initializing Pump...");

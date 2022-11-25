@@ -390,7 +390,6 @@ void Controller::clear_history(){
             Devices.testSSR.set(true);
             Devices.loadCell.calibrate(535.0);
             Devices.loadCell.zero();
-            pumpRunning = true;
         }
         float pumpAdjust = Devices.pump.PIDPompe.tick(Devices.pressureSensor.read());
 
@@ -417,9 +416,8 @@ void Controller::clear_history(){
         if(positionVerin != -1){
             if(positionVerin < 0x00FA){
                 speedAdjust = 0.0;
-            }else if(pumpRunning && positionVerin < 0x03F2){
+            }else if(Devices.pump.get_state() && positionVerin < 0x03F2){
                 Devices.pump.stop();
-                pumpRunning = false;
             }
         }
 
@@ -462,8 +460,11 @@ void Controller::clear_history(){
     }
 
     bool Controller::init_to_verin_up(){
-        // Position Verin = down
-        return false;
+        verinOn = true;
+        if(Devices.testSSR.get_state())
+            Devices.testSSR.set(false);
+        
+        return true;
     }
 
     bool Controller::verin_up_to_pre_infusion(){

@@ -118,9 +118,8 @@ void Main::demo_edika()
   Serial.println("Here we go!");
 
   // Verin Up
-  CAN_frame_t rx_frame;
-  Devices.verin.wake_up();
-  delay(250);
+  // Devices.verin.wake_up();
+  // delay(250);
 
   int pos;
   float speed = 80.0f;
@@ -131,7 +130,7 @@ void Main::demo_edika()
       Devices.verin.send_CAN(112.0f, speed);
       ms = millis();
     }
-    pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
+    pos = Devices.verin.receive_CAN(controlParam::position);
     if(pos > 0x03E8){
       speed = 30.0f;
     }
@@ -197,7 +196,7 @@ void Main::demo_edika()
   PIDPompe.setMaxIntegralCumulation(40.0);
   PIDPompe.setTarget(1.5);
   PIDPompe.setCumulStartFactor(0.8);
-  while(millis() - startPreInf < 18000){
+  while(millis() - startPreInf < 13000){
   
     float pumpAdjust = PIDPompe.tick(Devices.pressureSensor.read());
     printf("Factor: %.2f \n", pumpAdjust);
@@ -205,12 +204,11 @@ void Main::demo_edika()
     Devices.pump.send_command((int) (110 + pumpAdjust));
     // Devices.loadCell.get_load(10);
   }
-  Devices.pump.stop();
-  // Devices.testSSR.set(false);
-  delay(999999);
+  // Devices.pump.stop();
+  // delay(999999);
 
   Serial.println("Lowering verin...");
-  Devices.verin.wake_up();
+  // Devices.verin.wake_up();
 
   // std::chrono::_V2::system_clock::time_point time = std::chrono::high_resolution_clock::now();
   // auto lastTime = time;
@@ -286,7 +284,7 @@ void Main::demo_edika()
     
     float speedAdjust = PIDVerin.tick(Devices.pressureSensor.read());
 
-    pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
+    pos = Devices.verin.receive_CAN(controlParam::position);
     if(pos != -1){
       if(pos <= 0x0001){
         Serial.println("U r done bro");

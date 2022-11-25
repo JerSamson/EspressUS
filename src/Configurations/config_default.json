@@ -1,6 +1,9 @@
 
 {
     "name": "Default",
-    "target_temp": 92.5
+    "target_temp": 92.5,
+    "target_pressure": 8.5,
+    "preinf_pressure": 2.0,
+    "preinf_weight": 5.0
 }
 

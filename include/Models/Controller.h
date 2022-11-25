@@ -33,6 +33,11 @@ class Controller final{
     char err_log[100];
     bool err_resolved = true;
 
+    int positionVerin = -1;
+    float vitesseVerin;
+    bool verinOn = true;
+    bool pumpRunning = false;
+
     //debug
     bool using_thermo = false;
     bool using_loadcell = false;
@@ -68,38 +73,22 @@ class Controller final{
     esp_err_t wait_client_action();
     esp_err_t idle_action();
     esp_err_t init_action();
-    esp_err_t heating_action();
-    esp_err_t fill_boiler_action();
-    esp_err_t ready_action();
     esp_err_t verin_up_action();
-    esp_err_t filling_head_action();
-    esp_err_t extract_action();
+    esp_err_t pre_infusion_action();
+    esp_err_t infusion_action();
     esp_err_t done_action();
-    esp_err_t choke_action();
-    esp_err_t dripping_action();
-    esp_err_t flush_action();
     esp_err_t error_action();
     esp_err_t manual_action();
 
     // Transitions
     bool wait_client_transition();
     bool idle_to_init();
-    bool init_to_heating();
-    bool heating_to_ready();
-    bool heating_to_fill_boiler();
-    bool fill_boiler_to_heating();
-    bool ready_to_fill_boiler();
-    bool ready_to_verin_up();
-    bool verin_up_to_fill_head();
-    bool fill_head_to_extract();
-    bool extract_to_enjoy();
+    bool init_to_verin_up();
+    bool verin_up_to_pre_infusion();
+    bool pre_infusion_to_infusion();
+    bool infusion_to_enjoy();
     bool extract_to_choke();
-    bool enjoy_to_dripping();
-    bool choke_to_ready();
-    bool choke_to_flush();
-    bool dripping_to_ready();
-    bool dripping_to_flush();
-    bool flush_to_ready();
+    bool enjoy_to_main_menu();
     bool error_to_idle();
     bool connection_lost();
 
@@ -136,8 +125,6 @@ class Controller final{
     void reset_time();
 
     int64_t get_ellapsed_ms(std::chrono::steady_clock::time_point since);
-    // double get_ellapsed_ms(std::chrono::_V2::system_clock::time_point since);
-
     
     esp_err_t execute();
 

@@ -12,6 +12,7 @@ esp_err_t VerinCan::init(){
     }
 
     setup_frame_CAN();
+
     init_success = status == ESP_OK;
     return status;
 }
@@ -46,7 +47,7 @@ esp_err_t VerinCan::send_CAN(float targetPos, float dutyCycle, float currentLim,
     return status;
 }
 
-int VerinCan::receive_CAN(CAN_frame_t rx_frame, controlParam option){
+int VerinCan::receive_CAN(controlParam option){
     if(xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3*portTICK_PERIOD_MS)==pdTRUE){
         switch(option){
             case position:

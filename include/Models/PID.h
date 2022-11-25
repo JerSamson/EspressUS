@@ -1,9 +1,6 @@
-#ifndef PID_H
-#define PID_H
-#endif
+#pragma once
 
 #include <chrono>
-#include "./Models/Controller.h"
 
 template <class T>
 class PIDController

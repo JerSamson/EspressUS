@@ -49,7 +49,7 @@ esp_err_t Pump::init(){
 
     status |= dir_pin.init();
     status |= pwm_pin.init();
-    status |= dir_pin.set(false);  
+    status |= dir_pin.set(false);
 
     // configure LED PWM functionalitites
     ledcSetup(pwm_channel, freq, resolution);

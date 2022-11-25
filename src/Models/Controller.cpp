@@ -60,36 +60,7 @@ esp_err_t Controller::execute(){
 
         // Transitions
         if(ESP_OK != status)        {set_state(ERROR);}
-        else if(init_to_heating())  {set_state(HEATING);}
-        break;
-
-    case HEATING:
-        // Actions
-        status = heating_action();
-
-        // Transitions
-        if(ESP_OK != status)                {set_state(ERROR);}
-        else if(heating_to_fill_boiler())   {set_state(FILL_BOILER);}
-        else if(heating_to_ready())         {set_state(READY);}
-        break;
-    
-    case FILL_BOILER:
-        // Actions
-        status = fill_boiler_action();
-
-        // Transitions
-        if(ESP_OK != status)                {set_state(ERROR);}
-        else if(fill_boiler_to_heating())   {set_state(HEATING);}
-        break;
-
-    case READY:
-        // Actions
-        status = ready_action();
-
-        // Transitions
-        if(ESP_OK != status)            {set_state(ERROR);}
-        else if(ready_to_fill_boiler()) {set_state(FILL_BOILER);}
-        else if(ready_to_verin_up())    {set_state(VERIN_UP);}
+        else if(init_to_verin_up())  {set_state(VERIN_UP);}
         break;
 
     case VERIN_UP:
@@ -98,26 +69,25 @@ esp_err_t Controller::execute(){
 
         // Transitions
         if(ESP_OK != status)                {set_state(ERROR);}
-        else if(verin_up_to_fill_head())    {set_state(FILLING_HEAD);}
+        else if(verin_up_to_pre_infusion())    {set_state(PRE_INFUSION);}
         break;
 
-    case FILLING_HEAD:
+    case PRE_INFUSION:
         // Actions
-        status = filling_head_action();
+        status = pre_infusion_action();
 
         // Transitions
         if(ESP_OK != status)            {set_state(ERROR);}
-        else if(fill_head_to_extract()) {set_state(EXTRACT);}
+        else if(pre_infusion_to_infusion()) {set_state(INFUSION);}
         break;
 
-    case EXTRACT:
+    case INFUSION:
         // Actions
-        status = extract_action();
+        status = infusion_action();
 
         // Transitions
         if(ESP_OK != status)            {set_state(ERROR);}
-        else if(extract_to_choke())     {set_state(CHOKE);}
-        else if(extract_to_enjoy())     {set_state(DONE);}
+        else if(infusion_to_enjoy())     {set_state(DONE);}
         break;
 
     case DONE:
@@ -126,36 +96,7 @@ esp_err_t Controller::execute(){
 
         // Transitions
         if(ESP_OK != status)            {set_state(ERROR);}
-        else if(enjoy_to_dripping())    {set_state(DRIPPING);}
-        break;
-
-    case CHOKE:
-        // Actions
-        status = choke_action();
-
-        // Transitions
-        if(ESP_OK != status)            {set_state(ERROR);}
-        else if(choke_to_flush())       {set_state(FLUSH);}
-        else if(choke_to_ready())       {set_state(READY);}
-        break;
-
-    case DRIPPING:
-        // Actions
-        status = dripping_action();
-
-        // Transitions
-        if(ESP_OK != status)            {set_state(ERROR);}
-        else if(dripping_to_flush())    {set_state(FLUSH);}
-        else if(dripping_to_ready())    {set_state(READY);}
-        break;
-
-    case FLUSH:
-        // Actions
-        status = flush_action();
-
-        // Transitions
-        if(ESP_OK != status)            {set_state(ERROR);}
-        else if(flush_to_ready())       {set_state(READY);}
+        else if(enjoy_to_main_menu())    {set_state(WAIT_CLIENT);}
         break;
 
     case ERROR:
@@ -221,7 +162,6 @@ void Controller::set_state(STATES state){
 bool Controller::connection_lost(){
     return BLE::n_client == 0;
 }
-
 
 void Controller::reset_time(){
     begin = std::chrono::steady_clock::now();
@@ -421,40 +361,69 @@ void Controller::clear_history(){
         return status;  
     }
     
-    esp_err_t Controller::heating_action(){
-        print_once("DEBUG\t- HEATING ACTION FIRST LOOP");
-
-        // Activate boiler SSR
-
-        return status;  
-    }
-    
-    esp_err_t Controller::fill_boiler_action(){
-        // Devices.lcd.display_text("FILL BOILER");
-        print_once("DEBUG\t- FILL BOILER ACTION FIRST LOOP");
-
-        return status;  
-    }
-    
-    esp_err_t Controller::ready_action(){
-        print_once("DEBUG\t- READY ACTION FIRST LOOP");
-        // Devices.lcd.display_text("READY");
-        return status;  
-    }
-    
     esp_err_t Controller::verin_up_action(){
         print_once("DEBUG\t- VERIN UP ACTION FIRST LOOP");
+        positionVerin = Devices.verin.receive_CAN(controlParam::position);
+        if(positionVerin > 0x03E8){
+            vitesseVerin = 30.0f;
+        }else{
+            vitesseVerin = 80.0f;
+        }
+        Devices.verin.send_CAN(112.0f, vitesseVerin);
         // Devices.lcd.display_text("VERIN UP");
-        return status;  
+        return status;
     }
     
-    esp_err_t Controller::filling_head_action(){
+    esp_err_t Controller::pre_infusion_action(){
         print_once("DEBUG\t- FILLING HEAD ACTION FIRST LOOP");
+        if(first_loop){
+            Devices.pump.PIDPompe.setOutputBounded(true);
+            Devices.pump.PIDPompe.setOutputBounds(-110.0, 110.0);
+            Devices.pump.PIDPompe.setMaxIntegralCumulation(40.0);
+            Devices.pump.PIDPompe.setTarget(1.5);
+            Devices.pump.PIDPompe.setCumulStartFactor(0.8);
+
+            Devices.testSSR.set(true);
+            Devices.loadCell.calibrate(535.0);
+            Devices.loadCell.zero();
+            pumpRunning = true;
+        }
+        float pumpAdjust = Devices.pump.PIDPompe.tick(Devices.pressureSensor.read());
+
+        Devices.pump.send_command((int) (110 + pumpAdjust));
+        load = Devices.loadCell.read(1);
+
         // Devices.lcd.display_text("FILLING HEAD");
-        return status;  
+        return status;
     }
     
-    esp_err_t Controller::extract_action(){
+    esp_err_t Controller::infusion_action(){
+        if(first_loop){
+            Devices.verin.PIDVerin.setOutputBounded(true);
+            Devices.verin.PIDVerin.setOutputBounds(0.0, 75.0);
+            Devices.verin.PIDVerin.setMaxIntegralCumulation(30.0);
+            Devices.verin.PIDVerin.setTarget(8.5);
+            Devices.verin.PIDVerin.setCumulStartFactor(0.5);
+        }
+        float speedAdjust = Devices.verin.PIDVerin.tick(Devices.pressureSensor.read());
+
+        positionVerin = Devices.verin.receive_CAN(controlParam::position);
+        if(positionVerin != -1){
+            if(positionVerin < 0x00FA){
+                speedAdjust = 0.0;
+            }else if(pumpRunning && positionVerin < 0x03F2){
+                Devices.pump.stop();
+                pumpRunning = false;
+            }
+        }
+
+        if(speedAdjust == 0.0 && Devices.pressureSensor.read() > 9.5){
+            verinOn = false;
+        }else{
+            verinOn = true;
+        }
+
+        Devices.verin.send_CAN(0.0f, 20.0 + speedAdjust, 3.4, 0, verinOn);
         print_once("DEBUG\t- EXTRACT ACTION FIRST LOOP");
         // Devices.lcd.display_text("EXTRACT");
         return status;  
@@ -463,24 +432,6 @@ void Controller::clear_history(){
     esp_err_t Controller::done_action(){
         print_once("DEBUG\t- DONE ACTION FIRST LOOP");
         // Devices.lcd.display_text("DONE");
-        return status;  
-    }
-    
-    esp_err_t Controller::choke_action(){
-        print_once("DEBUG\t- CHOKE ACTION FIRST LOOP");
-        // Devices.lcd.display_text("CHOKE");
-        return status;  
-    }
-    
-    esp_err_t Controller::dripping_action(){
-        print_once("DEBUG\t- DRIPPING ACTION FIRST LOOP");
-        // Devices.lcd.display_text("DRIPPING");
-        return status;  
-    }
-    
-    esp_err_t Controller::flush_action(){
-        print_once("DEBUG\t- FLUSH ACTION FIRST LOOP");
-        // Devices.lcd.display_text("FLUSH");
         return status;  
     }
     
@@ -502,44 +453,26 @@ void Controller::clear_history(){
         return BLE::try_get_user_action_result("StartApp", result);
     }
 
-    bool Controller::init_to_heating(){
+    bool Controller::init_to_verin_up(){
         // Position Verin = down
         return false;
     }
 
-    bool Controller::heating_to_ready(){
-        return Devices.thermocouple.read() >= Configuration.target_temp;
-    }
-
-    bool Controller::heating_to_fill_boiler(){
-        // Niveau d'eau trop bas 
+    bool Controller::verin_up_to_pre_infusion(){
+        if(positionVerin >= 0x0456)
+            return true;
         return false;
     }
 
-    bool Controller::fill_boiler_to_heating(){
-        // Niveau d'eau alright et user action
-        return false;
+    bool Controller::pre_infusion_to_infusion(){
+        return !(load < 5.0);
     }
 
-    bool Controller::ready_to_fill_boiler(){
-        // Niveau d'eau trop bas 
-        return false;
-    }
-    bool Controller::ready_to_verin_up(){
-        // User action
-        return false;
-    }
-
-    bool Controller::verin_up_to_fill_head(){
-        // Position verin = up
-        return false;
-    }
-
-    bool Controller::fill_head_to_extract(){
-        return false;
-    }
-
-    bool Controller::extract_to_enjoy(){
+    bool Controller::infusion_to_enjoy(){
+        if(positionVerin != -1)
+            if(positionVerin <= 0x0001)
+                Devices.testSSR.set(false);
+                return true;
         return false;
     }
 
@@ -547,28 +480,7 @@ void Controller::clear_history(){
         return false;
     }
 
-    bool Controller::enjoy_to_dripping(){
-        return false;
-    }
-
-    bool Controller::choke_to_ready(){
-        return false;
-    }
-
-    bool Controller::choke_to_flush(){
-        return false;
-    }
-
-    bool Controller::dripping_to_ready(){
-
-        return false;
-    }
-
-    bool Controller::dripping_to_flush(){
-        return false;
-    }
-
-    bool Controller::flush_to_ready(){
+    bool Controller::enjoy_to_main_menu(){
         return false;
     }
 

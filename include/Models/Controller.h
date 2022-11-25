@@ -87,7 +87,6 @@ class Controller final{
     bool verin_up_to_pre_infusion();
     bool pre_infusion_to_infusion();
     bool infusion_to_enjoy();
-    bool extract_to_choke();
     bool enjoy_to_main_menu();
     bool error_to_idle();
     bool connection_lost();

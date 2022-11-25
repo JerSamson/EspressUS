@@ -2,6 +2,7 @@
 
 #include "Arduino.h"
 #include "DeviceBase.h"
+#include "./Models/PID.h"
 #include <ESP32CAN.h>
 #include <chrono>
 #include <CAN_config.h>

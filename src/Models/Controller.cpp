@@ -353,16 +353,18 @@ void Controller::clear_history(){
             }
         }
 
-        return status;  
+        return status;
     }
     
     esp_err_t Controller::init_action(){
         print_once("DEBUG\t- INIT ACTION FIRST LOOP");
-        return status;  
+        return status;
     }
     
     esp_err_t Controller::verin_up_action(){
         print_once("DEBUG\t- VERIN UP ACTION FIRST LOOP");
+        // Devices.lcd.display_text("VERIN UP");
+
         positionVerin = Devices.verin.receive_CAN(controlParam::position);
         if(positionVerin > 0x03E8){
             vitesseVerin = 30.0f;
@@ -370,12 +372,14 @@ void Controller::clear_history(){
             vitesseVerin = 80.0f;
         }
         Devices.verin.send_CAN(112.0f, vitesseVerin);
-        // Devices.lcd.display_text("VERIN UP");
+
         return status;
     }
     
     esp_err_t Controller::pre_infusion_action(){
         print_once("DEBUG\t- FILLING HEAD ACTION FIRST LOOP");
+        // Devices.lcd.display_text("PRE-INFUSION");
+
         if(first_loop){
             Devices.pump.PIDPompe.setOutputBounded(true);
             Devices.pump.PIDPompe.setOutputBounds(-110.0, 110.0);
@@ -393,11 +397,13 @@ void Controller::clear_history(){
         Devices.pump.send_command((int) (110 + pumpAdjust));
         load = Devices.loadCell.read(1);
 
-        // Devices.lcd.display_text("FILLING HEAD");
         return status;
     }
     
     esp_err_t Controller::infusion_action(){
+        print_once("DEBUG\t- EXTRACT ACTION FIRST LOOP");
+        // Devices.lcd.display_text("EXTRACT");
+
         if(first_loop){
             Devices.verin.PIDVerin.setOutputBounded(true);
             Devices.verin.PIDVerin.setOutputBounds(0.0, 75.0);
@@ -424,21 +430,23 @@ void Controller::clear_history(){
         }
 
         Devices.verin.send_CAN(0.0f, 20.0 + speedAdjust, 3.4, 0, verinOn);
-        print_once("DEBUG\t- EXTRACT ACTION FIRST LOOP");
-        // Devices.lcd.display_text("EXTRACT");
-        return status;  
+
+        return status;
     }
     
     esp_err_t Controller::done_action(){
         print_once("DEBUG\t- DONE ACTION FIRST LOOP");
         // Devices.lcd.display_text("DONE");
-        return status;  
+
+        Devices.verin.send_CAN(20.0f, 80.0f);
+
+        return status;
     }
     
     esp_err_t Controller::error_action(){
         print_once("DEBUG\t- ERROR ACTION FIRST LOOP");
         // Devices.lcd.display_text("ERROR");
-        return status;  
+        return status;
     }
 
 
@@ -476,11 +484,9 @@ void Controller::clear_history(){
         return false;
     }
 
-    bool Controller::extract_to_choke(){
-        return false;
-    }
-
     bool Controller::enjoy_to_main_menu(){
+        if(positionVerin >= 0x00C3)
+            return true;
         return false;
     }
 

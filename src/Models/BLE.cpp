@@ -28,7 +28,8 @@ std::map<std::string, std::string> BLE::characteristic_uuid_map = {
     {"ManualVerinUp",   MANUAL_V_UP_CHAR_UUID},
     {"ManualVerinDown", MANUAL_V_DOWN_CHAR_UUID},
 
-    {"StartApp",        USER_ACTION_CHAR_UUID}
+    {"StartApp",        USER_ACTION_CHAR_UUID},
+    {"PopUp",           POPUP_CONFIMATION_UUID}
 };
 std::map<std::string, uint32_t> BLE::characteristic_property_map = {
     {"Pressure",        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY},
@@ -42,6 +43,7 @@ std::map<std::string, uint32_t> BLE::characteristic_property_map = {
     {"ManualVerinUp",   BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
     {"ManualVerinDown", BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE},
 
+    {"PopUp",           BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY},
     {"StartApp",        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY}
 };
 std::map<std::string, CHARAC_TYPE> BLE::characteristic_type_map = {
@@ -56,6 +58,7 @@ std::map<std::string, CHARAC_TYPE> BLE::characteristic_type_map = {
     {"ManualVerinUp",   DATA},
     {"ManualVerinDown", DATA},
 
+    {"PopUp",           USER_ACTION},    
     {"StartApp",        USER_ACTION}
 };
 //

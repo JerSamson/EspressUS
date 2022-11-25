@@ -15,6 +15,8 @@
 #define SERVICE_UUID            "b72c2c7a-6b9b-4eee-82e7-b04983efca6d"
 
 #define USER_ACTION_CHAR_UUID   "4f509bf7-1e77-4f3a-8852-3d86fc48b344"
+#define POPUP_CONFIMATION_UUID  "25ebbc6f-6166-4e17-a3f8-cce9e3735a97"
+
 #define PRESSURE_CHAR_UUID      "4efc5750-2abb-425c-801d-d6d111f83cb7"
 #define STATE_CHAR_UUID         "e525d474-a055-4f39-9387-6c46e54fcd78"
 #define TEMP_CHAR_UUID          "25a62c3f-e74e-4dfd-96c2-bd9da4cac697"

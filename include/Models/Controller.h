@@ -83,7 +83,7 @@ class Controller final{
     bool wait_client_transition();
     bool idle_to_init();
     bool init_to_verin_up();
-    bool verin_up_to_pre_infusion();
+    std::string verin_up_to_pre_infusion();
     bool pre_infusion_to_infusion();
     bool infusion_to_enjoy();
     bool enjoy_to_main_menu();

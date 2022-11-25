@@ -59,7 +59,7 @@ esp_err_t Controller::execute(){
         status = init_action();
 
         // Transitions
-        if(ESP_OK != status)        {set_state(ERROR);}
+        if(ESP_OK != status)         {set_state(ERROR);}
         else if(init_to_verin_up())  {set_state(VERIN_UP);}
         break;
 
@@ -69,7 +69,8 @@ esp_err_t Controller::execute(){
 
         // Transitions
         if(ESP_OK != status)                {set_state(ERROR);}
-        else if(verin_up_to_pre_infusion())    {set_state(PRE_INFUSION);}
+        else if(verin_up_to_pre_infusion() == "1") {set_state(PRE_INFUSION);}
+        else if(verin_up_to_pre_infusion() == "2") {set_state(WAIT_CLIENT);}
         break;
 
     case PRE_INFUSION:
@@ -77,7 +78,7 @@ esp_err_t Controller::execute(){
         status = pre_infusion_action();
 
         // Transitions
-        if(ESP_OK != status)            {set_state(ERROR);}
+        if(ESP_OK != status)                {set_state(ERROR);}
         else if(pre_infusion_to_infusion()) {set_state(INFUSION);}
         break;
 
@@ -86,8 +87,8 @@ esp_err_t Controller::execute(){
         status = infusion_action();
 
         // Transitions
-        if(ESP_OK != status)            {set_state(ERROR);}
-        else if(infusion_to_enjoy())     {set_state(DONE);}
+        if(ESP_OK != status)          {set_state(ERROR);}
+        else if(infusion_to_enjoy())  {set_state(DONE);}
         break;
 
     case DONE:
@@ -95,8 +96,8 @@ esp_err_t Controller::execute(){
         status = done_action();
 
         // Transitions
-        if(ESP_OK != status)            {set_state(ERROR);}
-        else if(enjoy_to_main_menu())    {set_state(WAIT_CLIENT);}
+        if(ESP_OK != status)           {set_state(ERROR);}
+        else if(enjoy_to_main_menu())  {set_state(WAIT_CLIENT);}
         break;
 
     case ERROR:
@@ -467,10 +468,19 @@ void Controller::clear_history(){
         return true;
     }
 
-    bool Controller::verin_up_to_pre_infusion(){
-        if(positionVerin >= 0x0456)
-            return true;
-        return false;
+    std::string Controller::verin_up_to_pre_infusion(){
+        std::string result = "0";
+        if(positionVerin >= 0x0456){
+            if (!BLE::user_action_requested("Popup")){
+                if(!BLE::request_user_action("Popup")){
+                    sprintf(err_log, "Could not request user action 'Popup'. Check logs for more details");
+                    status = ESP_ERR_INVALID_ARG;
+                }
+            }else{
+                BLE::try_get_user_action_result("Popup", result);
+            }
+        }
+        return result;
     }
 
     bool Controller::pre_infusion_to_infusion(){

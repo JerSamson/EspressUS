@@ -6,6 +6,11 @@ float _Configuration::preinf_pressure = DEFAULT_PREINF_PRESSURE;
 float _Configuration::preinf_weight = DEFAULT_PREINF_WEIGHT;
 char _Configuration::config_name[] = "Default";
 
+
+void _Configuration::loadConfig(CONFIG config) {
+  loadConfig(config_map.at(config));
+}
+
 void _Configuration::loadConfig(const char *filename) {
     File file = SD.open(filename);
 

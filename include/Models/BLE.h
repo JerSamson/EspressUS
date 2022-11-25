@@ -7,7 +7,10 @@
 #include <map>
 #include <list>
 #include <BLE2902.h>
+#include <sstream>
 #include "patch.h"
+
+#include "Configuration.h"
 
 #define TEST_CHAR_UUID          "cb4e9606-267f-4494-8974-2b10c64ea6da"
 #define TESTFLOAT_CHAR_UUID     "f83fe164-46b2-4ed6-9b92-18ab77fa8c54"
@@ -23,6 +26,8 @@
 #define LOAD_CHAR_UUID          "d268e4e3-c6f9-491b-a149-fee17cbc3ed9"
 
 #define OP_MODE_CHAR_UUID       "2cc0f92e-12d0-49d2-9d0e-2fa4ea27c525"
+#define RECIPE_CHAR_UUID        "bfe699ec-0935-4ebb-859a-3b0512d14780"
+
 #define MANUAL_HEAT_CHAR_UUID   "41d4fe9f-0f2e-447f-82dc-a71e9c684f38"
 #define MANUAL_FLUSH_CHAR_UUID  "bd9286f9-f68c-419b-90f3-69d570fea9e6"
 #define MANUAL_V_UP_CHAR_UUID   "0592b5b5-65be-4382-bcd2-0f8a54465ef8"

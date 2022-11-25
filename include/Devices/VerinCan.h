@@ -5,6 +5,7 @@
 #include <ESP32CAN.h>
 #include <chrono>
 #include <CAN_config.h>
+#include "./Models/PID.h"
 
 enum controlParam {
     position,

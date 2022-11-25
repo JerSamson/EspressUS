@@ -44,6 +44,8 @@ class _Configuration{
     }
 
     static void loadConfig(const char *filename);
+    static void loadConfig(CONFIG config);
+    
     static bool is_valid();
     // Prints the content of a file to the Serial
     static void printFile(const char *filename);

@@ -212,6 +212,65 @@ void Main::demo_edika()
   Serial.println("Lowering verin...");
   Devices.verin.wake_up();
 
+  // std::chrono::_V2::system_clock::time_point time = std::chrono::high_resolution_clock::now();
+  // auto lastTime = time;
+  // float dt = 0.0;
+  // int on = true;
+  // float _p = 8.0;
+  // float _i = 0.006;
+  // float _d = 0.06;
+  // float cible = 8.5; //bars
+  // float command; //Duty Cycle
+  // float error; //bars
+  // float lastError;
+  // float derivativeCycle;
+  // float integralCycle;
+  // float integralCumul = 0.0;
+  // float pressure;
+  // Devices.pump.stop();
+  // while(true){
+
+  //   pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
+  //   if(pos < 0x03F2){
+  //     Devices.pump.stop();
+  //   }
+  //   pressure = Devices.pressureSensor.get_pressure();
+  //   error = cible - pressure;
+  //   time = std::chrono::high_resolution_clock::now();
+
+  //   dt = std::chrono::duration<double, std::milli>(time-lastTime).count();
+  //   if(dt != 0.0){
+  //     derivativeCycle = (error-lastError)/(dt/1000);
+  //     if(error < 0.6*cible){
+  //       integralCycle = ((lastError + error) / 2) * dt;
+  //       integralCumul += integralCycle;
+  //     }
+  //     if(derivativeCycle > 30.0){
+  //       command = error*_p + integralCumul*_i;
+  //       // command = error*_p;
+  //     }else{
+  //       command = (error*_p + integralCumul*_i + derivativeCycle*_d);
+  //       // command = (error*_p + derivativeCycle*_d);
+  //       // printf("Command: %.2f ", command);
+  //     }
+  //   }else{
+  //     command = error  * _p;
+  //   }
+  //   lastTime = time;
+  //   lastError = error;
+
+  //   if(pos < 0x00FA && pos != -1){
+  //     command = 0.0;
+  //   }else if(command < 0.0 && Devices.pressureSensor.get_pressure() > 9.5){
+  //     on = false;
+  //     command = 0.0;
+  //   }else if(command < 0.0){
+  //     command = 0.0;
+  //   }else if(command > 95.0){
+  //     command = 95.0;
+  //   }else{
+  //     on = true;
+  //   }
 
   bool IsOn = true;
   float p_verin = 8.0;
@@ -223,8 +282,10 @@ void Main::demo_edika()
   PIDVerin.setMaxIntegralCumulation(30.0);
   PIDVerin.setTarget(8.5);
   PIDVerin.setCumulStartFactor(0.5);
-  float speedAdjust;
   while(true){
+    
+    float speedAdjust = PIDVerin.tick(Devices.pressureSensor.read());
+
     pos = Devices.verin.receive_CAN(rx_frame, controlParam::position);
     if(pos != -1){
       if(pos <= 0x0001){
@@ -236,8 +297,6 @@ void Main::demo_edika()
         Devices.pump.stop();
       }
     }
-    
-    speedAdjust = PIDVerin.tick(Devices.pressureSensor.read());
 
     if(speedAdjust == 0.0 && Devices.pressureSensor.read() > 9.5){
       IsOn = false;

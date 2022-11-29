@@ -32,17 +32,20 @@ esp_err_t VerinCan::send_CAN(float targetPos, float dutyCycle, float currentLim,
         Serial.println("Warning - VerinCAN::to_CAN - Invalid target position");
         return ESP_FAIL;
     }
-
-    if(get_ellapsed_ms_d(last_wakeup_ms) >= 1800) {
-        wake_up();
-    }else{
-        last_wakeup_ms = std::chrono::high_resolution_clock::now();
-    }
-
     esp_err_t status{ESP_OK};
 
+    if(get_ellapsed_ms_d(last_wakeup_ms) >= 1800) {
+        Serial.println("Debug\t- send_CAN - Auto Wake Up Verin");
+        wake_up();
+    }
+
+    last_wakeup_ms = std::chrono::high_resolution_clock::now();
+
     status |= to_CAN(targetPos, currentLim, dutyCycle, mvtProfile, allowMvt);
-    ESP32Can.CANWriteFrame(&send_frame);
+    
+    int nFramesWritten = ESP32Can.CANWriteFrame(&send_frame);
+    
+    Serial.printf("Debug\t- ESP32Can::CANWriteFrame() - returned %d\n", nFramesWritten);
 
     return status;
 }

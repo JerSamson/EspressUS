@@ -91,7 +91,7 @@ void hx711_t::test_read(){
     {
         long reading = scale.get_units(10);
         Serial.print("Result: ");
-        Serial.println(reading/452.0);
+        Serial.println(reading/352.0);
         delay(500);
     }
   } 

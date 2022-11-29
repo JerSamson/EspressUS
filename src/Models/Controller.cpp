@@ -389,7 +389,7 @@ void Controller::clear_history(){
             Devices.pump.PIDPompe.setCumulStartFactor(0.8);
 
             Devices.testSSR.set(true);
-            Devices.loadCell.calibrate(535.0);
+            Devices.loadCell.calibrate(352.0);
             Devices.loadCell.zero();
         }
         float pumpAdjust = Devices.pump.PIDPompe.tick(Devices.pressureSensor.read());

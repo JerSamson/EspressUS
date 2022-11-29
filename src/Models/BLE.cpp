@@ -79,7 +79,7 @@ void BLE::setup()
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new ServerCallbacks());
 
-    pService = pServer->createService( BLEUUID::fromString(SERVICE_UUID), 30, 0);
+    pService = pServer->createService( BLEUUID::fromString(SERVICE_UUID), 60, 0);
 
     // Create a characteristic with a unique UUID and stores it in characteristic table with the provided string as a key
     for (std::map<std::string, uint32_t>::iterator it = characteristic_property_map.begin(); it != characteristic_property_map.end(); ++it)

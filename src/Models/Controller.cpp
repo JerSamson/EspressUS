@@ -199,7 +199,7 @@ bool Controller::update_value(Sensor sensor, float &current_value, std::map<uint
 
     // Get and save current value
     float last_value = current_value;
-    current_value = sensor.read();
+    current_value = sensor.read(1);
 
     bool isValueValid = true; // TODO: Validate value according to sensor? Sensor base class method?
     if(!isValueValid){
@@ -353,7 +353,6 @@ void Controller::clear_history(){
                 status = ESP_ERR_INVALID_ARG;
             }
         }
-
         return status;
     }
     
@@ -395,7 +394,8 @@ void Controller::clear_history(){
         float pumpAdjust = Devices.pump.PIDPompe.tick(Devices.pressureSensor.read());
 
         Devices.pump.send_command((int) (110 + pumpAdjust));
-        load = Devices.loadCell.read(1);
+        update_load();
+        // load = Devices.loadCell.read(1);
 
         return status;
     }
@@ -463,28 +463,29 @@ void Controller::clear_history(){
     bool Controller::init_to_verin_up(){
         verinOn = true;
         if(Devices.testSSR.get_state())
-            Devices.testSSR.set(false);
+            status = Devices.testSSR.set(false);
         
-        return true;
+        return ESP_OK == status;
     }
 
     std::string Controller::verin_up_to_pre_infusion(){
         std::string result = "0";
         if(positionVerin >= 0x0456){
-            if (!BLE::user_action_requested("Popup")){
-                if(!BLE::request_user_action("Popup")){
-                    sprintf(err_log, "Could not request user action 'Popup'. Check logs for more details");
+            if (!BLE::user_action_requested("PopUp")){
+                if(!BLE::request_user_action("PopUp")){
+                    sprintf(err_log, "Could not request user action 'PopUp'. Check logs for more details");
                     status = ESP_ERR_INVALID_ARG;
                 }
             }else{
-                BLE::try_get_user_action_result("Popup", result);
+                BLE::try_get_user_action_result("PopUp", result);
             }
         }
         return result;
     }
 
     bool Controller::pre_infusion_to_infusion(){
-        return !(load < 5.0);
+        update_load();
+        return load > 5.0;
     }
 
     bool Controller::infusion_to_enjoy(){

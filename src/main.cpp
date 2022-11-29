@@ -47,10 +47,9 @@ esp_err_t Main::setup()
   Devices = _Devices::getInstance();
   status |= Devices.init();
 
-  // Serial.println("DEBUG\t- Main::setup() - Loading configuration");
-
-  // _Configuration& config = _Configuration::getInstance();
-  // config.loadConfig(config_map.at(CONFIG::Default));
+  Serial.println("DEBUG\t- Main::setup() - Loading configuration");
+  _Configuration& config = _Configuration::getInstance();
+  config.loadConfig(config_map.at(CONFIG::Default));
 
   controller.clear_history();
 

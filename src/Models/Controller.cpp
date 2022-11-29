@@ -69,8 +69,20 @@ esp_err_t Controller::execute(){
 
         // Transitions
         if(ESP_OK != status)                {set_state(ERROR);}
-        else if(verin_up_to_pre_infusion() == "1") {set_state(PRE_INFUSION);}
-        else if(verin_up_to_pre_infusion() == "2") {set_state(WAIT_CLIENT);}
+        else if(verin_up_to_pre_infusion()) {set_state(WAIT_PORTE_F);}
+        break;
+
+    case WAIT_PORTE_F:
+        // Actions
+        status = wait_porte_filtre_action();
+
+        // Transitions
+        if(ESP_OK != status)                {set_state(ERROR);}
+        else if(waitpf_to_pre_infusion())   {set_state(PRE_INFUSION);}
+        else if(waitpf_to_wait_client())    {
+            set_state(WAIT_CLIENT);    
+            last_state = WAIT_CLIENT; // Prevents code to resume WAIT_PORTE_F once connection is validated
+        }
         break;
 
     case PRE_INFUSION:
@@ -97,7 +109,10 @@ esp_err_t Controller::execute(){
 
         // Transitions
         if(ESP_OK != status)           {set_state(ERROR);}
-        else if(enjoy_to_main_menu())  {set_state(WAIT_CLIENT);}
+        else if(enjoy_to_main_menu()) {
+            set_state(WAIT_CLIENT);    
+            last_state = WAIT_CLIENT; // Prevents code to resume WAIT_PORTE_F once connection is validated
+        }
         break;
 
     case ERROR:
@@ -192,13 +207,13 @@ bool Controller::update_value(Sensor sensor, float &current_value, std::map<uint
     uint64_t ellapsed = ms_since_start();
 
     // Get time of last reading, if any
-    uint64_t last_ellapsed = 0;
-    if(!value_map.empty()){
-        last_ellapsed = (value_map.rbegin())->first;
-    }
+    // uint64_t last_ellapsed = 0;
+    // if(!value_map.empty()){
+    //     last_ellapsed = (value_map.rbegin())->first;
+    // }
 
     // Get and save current value
-    float last_value = current_value;
+    // float last_value = current_value;
     current_value = sensor.read(1);
 
     bool isValueValid = true; // TODO: Validate value according to sensor? Sensor base class method?
@@ -212,39 +227,38 @@ bool Controller::update_value(Sensor sensor, float &current_value, std::map<uint
     value_map[ellapsed] = current_value;
 
     // Compute and save derivative according to last value
-    if(last_value != NAN){
-        d_map[ellapsed] = derivate(last_ellapsed, last_value, ellapsed, current_value);
-    }
+    // if(last_value != NAN){
+    //     d_map[ellapsed] = derivate(last_ellapsed, last_value, ellapsed, current_value);
+    // }
 
     // Compute and save temp integral according to last value
     // float last_i = (i_map.rbegin())->second;
-    float last_i = (--i_map.end())->second;
-    float i = integrate(last_ellapsed, last_value, ellapsed, current_value);
-    i_map[ellapsed] = last_i + i;
+    // float last_i = (--i_map.end())->second;
+    // float i = integrate(last_ellapsed, last_value, ellapsed, current_value);
+    // i_map[ellapsed] = last_i + i;
 
     return true;
 }
 
 bool Controller::update_temp(){
-    bool success = update_value(Devices.thermocouple, temp, temp_history, d_temp_history, i_temp_history);
-    if(success){
-        BLE::update_characteristic("Temp", temp);
-    }
-    return success;
+    // bool success = update_value(Devices.thermocouple, temp, temp_history, d_temp_history, i_temp_history);
+    temp = Devices.thermocouple.read();
+    BLE::update_characteristic("Temp", temp);
+    return true;
 }
+
 bool Controller::update_load(){
-    bool success = update_value(Devices.loadCell, load, load_history, d_load_history, i_load_history);
-    if(success){
-        BLE::update_characteristic("Load", load);
-    }
-    return success;
+    // bool success = update_value(Devices.loadCell, load, load_history, d_load_history, i_load_history);
+    load = Devices.loadCell.read();
+    BLE::update_characteristic("Load", load);
+    
+    return true;
 }
 bool Controller::update_pressure(){
-    bool success = update_value(Devices.pressureSensor, pressure, pressure_history, d_pressure_history, i_pressure_history);
-    if(success){
-        BLE::update_characteristic("Pressure", pressure);
-    }
-    return success;
+    // bool success = update_value(Devices.pressureSensor, pressure, pressure_history, d_pressure_history, i_pressure_history);
+    pressure = Devices.pressureSensor.read();
+    BLE::update_characteristic("Pressure", pressure);
+    return true;
 }
 
 void Controller::print_once(std::string str){
@@ -305,7 +319,15 @@ void Controller::clear_history(){
         bool verinDown = BLE::tryGetCharacteristic("ManualVerinDown")->getValue() == "1";
 
         float verin_target = verinUp? 112.0f : 0.0f;
-        Devices.verin.send_CAN(verin_target, 20.0f, 3, 0, verinUp||verinDown);
+
+        if(verinUp||verinDown){
+            Serial.println("INFO\t- Manual command received - VERIN UP/DOWN");
+            verin_moving_manual = true;
+            Devices.verin.send_CAN(verin_target, 20.0f, 3.4f, 0, true);   
+        }else if(verin_moving_manual){
+            Devices.verin.send_CAN(verin_target, 20.0f, 3.4f, 0, false);
+            verin_moving_manual = false;
+        }
 
         if(heating || flushing){
             Devices.testSSR.set(true);
@@ -323,16 +345,6 @@ void Controller::clear_history(){
             Serial.println("INFO\t- Manual command received - FLUSHING");
             Devices.pump.send_command(180);
         }
-
-        if(verinUp||verinDown){
-            Serial.println("INFO\t- Manual command received - VERIN UP/DOWN");
-            Devices.verin.send_CAN(112.0f, 20.0f);   
-        }
-        
-        // if(verinDown){
-        //     Serial.println("INFO\t- Manual command received - VERIN DOWN");
-        //     Devices.verin.send_CAN(0.0f, 20.0f);   
-        // }
 
         return status;
     }
@@ -366,6 +378,7 @@ void Controller::clear_history(){
         // Devices.lcd.display_text("VERIN UP");
 
         positionVerin = Devices.verin.receive_CAN(controlParam::position);
+        Serial.printf("DEBUG\t- verin_up_Action() - %d mm\n", positionVerin);
         if(positionVerin > 0x03E8){
             vitesseVerin = 30.0f;
         }else{
@@ -390,8 +403,11 @@ void Controller::clear_history(){
             Devices.testSSR.set(true);
             Devices.loadCell.calibrate(352.0);
             Devices.loadCell.zero();
+            Serial.println("END FIRST LOOP ACTIONS");
         }
-        float pumpAdjust = Devices.pump.PIDPompe.tick(Devices.pressureSensor.read());
+
+        update_pressure();
+        float pumpAdjust = Devices.pump.PIDPompe.tick(pressure);
 
         Devices.pump.send_command((int) (110 + pumpAdjust));
         update_load();
@@ -411,7 +427,8 @@ void Controller::clear_history(){
             Devices.verin.PIDVerin.setTarget(8.5);
             Devices.verin.PIDVerin.setCumulStartFactor(0.5);
         }
-        float speedAdjust = Devices.verin.PIDVerin.tick(Devices.pressureSensor.read());
+        update_pressure();
+        float speedAdjust = Devices.verin.PIDVerin.tick(pressure);
 
         positionVerin = Devices.verin.receive_CAN(controlParam::position);
         if(positionVerin != -1){
@@ -422,7 +439,7 @@ void Controller::clear_history(){
             }
         }
 
-        if(speedAdjust == 0.0 && Devices.pressureSensor.read() > 9.5){
+        if(speedAdjust == 0.0 && pressure > 9.5){
             verinOn = false;
         }else{
             verinOn = true;
@@ -448,6 +465,17 @@ void Controller::clear_history(){
         return status;
     }
 
+    esp_err_t Controller::wait_porte_filtre_action(){
+        // Request user action to popup prte filtre
+        if(first_loop){
+            if(!BLE::request_user_action("PopUp")){
+                sprintf(err_log, "Could not request user action 'PopUp'. Check logs for more details");
+                status = ESP_ERR_INVALID_ARG;
+            }
+        }
+        return status;
+    }
+
 
 // ================== TRANSITIONS ==================
 
@@ -468,19 +496,10 @@ void Controller::clear_history(){
         return ESP_OK == status;
     }
 
-    std::string Controller::verin_up_to_pre_infusion(){
-        std::string result = "0";
-        if(positionVerin >= 0x0456){
-            if (!BLE::user_action_requested("PopUp")){
-                if(!BLE::request_user_action("PopUp")){
-                    sprintf(err_log, "Could not request user action 'PopUp'. Check logs for more details");
-                    status = ESP_ERR_INVALID_ARG;
-                }
-            }else{
-                BLE::try_get_user_action_result("PopUp", result);
-            }
-        }
-        return result;
+    bool Controller::verin_up_to_pre_infusion(){
+        positionVerin = Devices.verin.receive_CAN(controlParam::position);
+        Serial.printf("DEBUG\t- verin_up_Action() trans - %d mm\n", positionVerin);
+        return positionVerin >= 0x0456;
     }
 
     bool Controller::pre_infusion_to_infusion(){
@@ -504,4 +523,18 @@ void Controller::clear_history(){
 
     bool Controller::error_to_idle(){
         return false;
+    }
+
+    bool Controller::waitpf_to_pre_infusion(){
+        std::string result = "0";
+        BLE::try_get_user_action_result("PopUp", result);
+
+        return result == "1";
+    }
+
+    bool Controller::waitpf_to_wait_client(){
+        std::string result = "0";
+        BLE::try_get_user_action_result("PopUp", result);
+
+        return result == "2";
     }

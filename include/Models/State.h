@@ -13,6 +13,7 @@ enum STATES{
     DONE         = 6,
     WAIT_CLIENT  = 7,
     MANUAL_STATE = 8,
+    WAIT_PORTE_F = 9,
     ERROR        = 0
 };
 
@@ -25,6 +26,7 @@ const std::map<STATES, std::string> state2str_map = {
     {DONE        , "Done!"},
     {WAIT_CLIENT , "Waiting for client"},
     {MANUAL_STATE, "Manual"},
+    {WAIT_PORTE_F, "Waiting for porte-filtre"},
     {ERROR       , "Error"}
 };
 

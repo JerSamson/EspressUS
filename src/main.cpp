@@ -21,7 +21,7 @@ void setup()
 void loop()
 {
   my_main.run();
-  delay(200);
+  delay(100);
 }
 
 void Main::run(void)

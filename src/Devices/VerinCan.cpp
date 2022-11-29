@@ -21,9 +21,16 @@ esp_err_t VerinCan::wake_up(){
     esp_err_t status{ESP_OK};
 
     Serial.println("INFO\t- VerinCan::Wake_up() - Waking up the verin");
-    status |= ESP32Can.CANWriteFrame(&wake_frame);
+
+    int total_delay = 500;
+    int n_spam = 10;
+
+    for(int i=0;i<n_spam;i++){
+        status |= ESP32Can.CANWriteFrame(&wake_frame);
+        delay(total_delay/n_spam);
+    }
+
     last_wakeup_ms = std::chrono::high_resolution_clock::now();
-    
     return status;
 }
 
@@ -45,7 +52,7 @@ esp_err_t VerinCan::send_CAN(float targetPos, float dutyCycle, float currentLim,
     
     int nFramesWritten = ESP32Can.CANWriteFrame(&send_frame);
     
-    Serial.printf("Debug\t- ESP32Can::CANWriteFrame() - returned %d\n", nFramesWritten);
+    // Serial.printf("Debug\t- ESP32Can::CANWriteFrame() - returned %d\n", nFramesWritten);
 
     return status;
 }

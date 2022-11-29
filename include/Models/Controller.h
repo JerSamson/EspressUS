@@ -23,6 +23,8 @@ class Controller final{
     static _Configuration& Configuration;
 
     bool first_loop = true;
+    bool verin_moving_manual = false;
+
     OperationMode operation_mode = OperationMode::AUTO;
 
     esp_err_t status = ESP_OK;
@@ -77,17 +79,20 @@ class Controller final{
     esp_err_t infusion_action();
     esp_err_t done_action();
     esp_err_t error_action();
+    esp_err_t wait_porte_filtre_action();
     esp_err_t manual_action();
 
     // Transitions
     bool wait_client_transition();
     bool idle_to_init();
     bool init_to_verin_up();
-    std::string verin_up_to_pre_infusion();
+    bool verin_up_to_pre_infusion();
     bool pre_infusion_to_infusion();
     bool infusion_to_enjoy();
     bool enjoy_to_main_menu();
     bool error_to_idle();
+    bool waitpf_to_pre_infusion();
+    bool waitpf_to_wait_client();
     bool connection_lost();
 
 

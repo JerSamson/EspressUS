@@ -24,7 +24,7 @@ class VerinCan: public DeviceBase{
 
     double get_ellapsed_ms_d(std::chrono::_V2::system_clock::time_point since){
         double ell = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-since).count();
-        Serial.printf("Get_ellapsed: %f\n", ell);
+        // Serial.printf("Get_ellapsed: %f\n", ell);
         return ell;
     }
 

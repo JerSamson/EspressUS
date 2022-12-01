@@ -13,9 +13,9 @@ protected:
 uint8_t dout;
 uint8_t sck;
 Gpio::GpioOutput alim;
-HX711 scale;
 
 public:
+HX711 scale;
 
 bool is_active(){ return alim.state(); }
 bool can_read(){ return is_active() && is_init() && scale.is_ready(); }

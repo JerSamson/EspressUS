@@ -31,10 +31,26 @@ esp_err_t hx711_t::init(){
 }
 
 float hx711_t::read(int readings){
-    if(!is_active() || !is_init() || !scale.is_ready()){
-    Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is either inactive or not initialized.");
-    return 0.0;
+  if(!is_active()){
+    Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is inactive.");
+    return scale.get_units(readings);
   }
+
+  if(!is_init()){
+    Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is not initialized.");
+    return scale.get_units(readings);
+  }
+
+  if(!scale.is_ready()){
+    Serial.println("WARNING - hx711_t::get_load() - Tried to use loadCell but it is not ready.");
+    return scale.get_units(readings);
+  }
+
+  // if(scale.wait_ready_timeout(100)){
+  //   return scale.get_units(readings);
+  // }
+
+  Serial.println("ERROR\t- loadcell::read() - the loadcell was not ready while acquiring data");
 
   return scale.get_units(readings);
 }
@@ -53,10 +69,10 @@ long hx711_t::zero(){
 }
 
 void hx711_t::calibrate(float calibration_factor){
-  if(!is_active() || !is_init() || !scale.is_ready()){
-    Serial.println("WARNING - hx711_t::calibrate() - Tried to use loadCell but it is either inactive or not initialized.");
-    return;
-  }
+  // if(!is_active() || !is_init() || !scale.is_ready()){
+  //   Serial.println("WARNING - hx711_t::calibrate() - Tried to use loadCell but it is either inactive or not initialized.");
+  //   return;
+  // }
   scale.set_scale(calibration_factor);
 }
 

@@ -300,6 +300,7 @@ void BLE::ServerCallbacks::onDisconnect(BLEServer *pServer)
     deviceConnected = false;
     num_client--;
     Serial.printf("INFO\t- BLE::onDisconnect() - Now connected to %d client(s).\n", num_client);
+    pServer->startAdvertising(); // restart advertising
 }
 
 void BLE::UserActionCallback::onWrite(BLECharacteristic *pCharacteristic)

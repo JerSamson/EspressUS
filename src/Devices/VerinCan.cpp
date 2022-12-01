@@ -27,7 +27,7 @@ esp_err_t VerinCan::wake_up(){
 
     for(int i=0;i<n_spam;i++){
         status |= ESP32Can.CANWriteFrame(&wake_frame);
-        delay(total_delay/n_spam);
+        // delay(total_delay/n_spam);
     }
 
     last_wakeup_ms = std::chrono::high_resolution_clock::now();
@@ -60,6 +60,7 @@ esp_err_t VerinCan::send_CAN(float targetPos, float dutyCycle, float currentLim,
 int VerinCan::receive_CAN(controlParam option){
     if(xQueueReceive(CAN_cfg.rx_queue, &rx_frame, 3*portTICK_PERIOD_MS)==pdTRUE){
         switch(option){
+            Serial.printf("Position: %d, Vitesse: %d, Courant, %d\n", (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0], (rx_frame.data.u8[5] << 8) + rx_frame.data.u8[4], (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0]);
             case position:
                 return (rx_frame.data.u8[1] << 8) + rx_frame.data.u8[0];
                 break;

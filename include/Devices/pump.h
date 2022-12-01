@@ -18,7 +18,7 @@ class Pump: public DeviceBase{
     const int pwm_channel = 0;
     const int resolution = 8;
 
-    const float p_pompe = 70.0;
+    const float p_pompe = 60.0;
     const float i_pompe = 14.0;
     const float d_pompe = 0.0;
 

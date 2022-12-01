@@ -14,6 +14,23 @@ esp_err_t Controller::execute(){
         return status;
     }
 
+    // double ell = VerinCan::get_ellapsed_ms_d(last_exec);
+    // last_exec = std::chrono::high_resolution_clock::now();
+    // exec_accum += ell;
+
+    // int modulo = 10;
+    // if(exec_counter % modulo == 0){
+    //     Serial.printf("DEBUG\t- avg time of last %d executions: %.3fms\n", modulo, (float)(exec_accum/modulo));
+    //     exec_accum = 0;
+    //     exec_counter = 0;
+    // }
+
+
+    if(last_state == MANUAL_STATE && first_loop){
+            Devices.testSSR.set(false);
+    }
+
+
     // Get operation mode
     operation_mode = BLE::tryGetCharacteristic("OperationMode")->getValue() == "0" ? OperationMode::AUTO : OperationMode::MANUAL;
 
@@ -33,6 +50,7 @@ esp_err_t Controller::execute(){
     {
     case WAIT_CLIENT:
         // Actions
+        // loop_delay = 100;
         status = wait_client_action();
 
         // Transitions
@@ -47,6 +65,7 @@ esp_err_t Controller::execute(){
 
     case IDLE:
         // Actions
+        // loop_delay = 100;
         status = idle_action();
 
         // Transitions
@@ -56,6 +75,7 @@ esp_err_t Controller::execute(){
 
     case INIT:
         // Actions
+        // loop_delay = 100;
         status = init_action();
 
         // Transitions
@@ -65,6 +85,7 @@ esp_err_t Controller::execute(){
 
     case VERIN_UP:
         // Actions
+        // loop_delay = 100;
         status = verin_up_action();
 
         // Transitions
@@ -74,6 +95,7 @@ esp_err_t Controller::execute(){
 
     case WAIT_PORTE_F:
         // Actions
+        // loop_delay = 100;
         status = wait_porte_filtre_action();
 
         // Transitions
@@ -87,6 +109,7 @@ esp_err_t Controller::execute(){
 
     case PRE_INFUSION:
         // Actions
+        // loop_delay = 1;
         status = pre_infusion_action();
 
         // Transitions
@@ -96,6 +119,7 @@ esp_err_t Controller::execute(){
 
     case INFUSION:
         // Actions
+        // loop_delay = 1;
         status = infusion_action();
 
         // Transitions
@@ -105,6 +129,7 @@ esp_err_t Controller::execute(){
 
     case DONE:
         // Actions
+        // loop_delay = 100;
         status = done_action();
 
         // Transitions
@@ -116,10 +141,12 @@ esp_err_t Controller::execute(){
         break;
 
     case ERROR:
+        // loop_delay = 100;
         Serial.printf("ERROR\t- Controller::execute() - In error state: (%s)\n", err_log);
         break;
 
     case MANUAL_STATE:
+        // loop_delay = 100;
         status = manual_action();
 
         // Transitions
@@ -131,6 +158,7 @@ esp_err_t Controller::execute(){
         break;
 
     default:
+        // loop_delay = 100;
         int state_num = (static_cast<int>(current_state));
         sprintf(err_log, "Controller was in an unknown state (%d)", state_num);
         set_state(ERROR);
@@ -158,6 +186,14 @@ esp_err_t Controller::execute(){
                 break;
         }
     }
+
+
+    if(current_state != PRE_INFUSION && current_state != INFUSION){
+        // Serial.printf("DEBUG\t- Execution delay: %d\n", loop_delay);
+        delay(loop_delay);
+    }
+
+    exec_counter++;
 
     return status;
 }
@@ -243,21 +279,29 @@ bool Controller::update_value(Sensor sensor, float &current_value, std::map<uint
 bool Controller::update_temp(){
     // bool success = update_value(Devices.thermocouple, temp, temp_history, d_temp_history, i_temp_history);
     temp = Devices.thermocouple.read();
-    BLE::update_characteristic("Temp", temp);
+
+    if(exec_counter % 3 == 0) 
+        BLE::update_characteristic("Temp", temp);
+
     return true;
 }
 
 bool Controller::update_load(){
     // bool success = update_value(Devices.loadCell, load, load_history, d_load_history, i_load_history);
     load = Devices.loadCell.read();
-    BLE::update_characteristic("Load", load);
+
+    if(exec_counter % 3 == 0) 
+        BLE::update_characteristic("Load", load);
     
     return true;
 }
 bool Controller::update_pressure(){
     // bool success = update_value(Devices.pressureSensor, pressure, pressure_history, d_pressure_history, i_pressure_history);
     pressure = Devices.pressureSensor.read();
-    BLE::update_characteristic("Pressure", pressure);
+
+    if(exec_counter % 3 == 0) 
+        BLE::update_characteristic("Pressure", pressure);
+
     return true;
 }
 
@@ -323,9 +367,9 @@ void Controller::clear_history(){
         if(verinUp||verinDown){
             Serial.println("INFO\t- Manual command received - VERIN UP/DOWN");
             verin_moving_manual = true;
-            Devices.verin.send_CAN(verin_target, 20.0f, 3.4f, 0, true);   
+            Devices.verin.send_CAN(verin_target, 25.0f, 3.4f, 0, true);   
         }else if(verin_moving_manual){
-            Devices.verin.send_CAN(verin_target, 20.0f, 3.4f, 0, false);
+            Devices.verin.send_CAN(verin_target, 25.0f, 3.4f, 0, false);
             verin_moving_manual = false;
         }
 
@@ -333,7 +377,7 @@ void Controller::clear_history(){
             Devices.testSSR.set(true);
         }else if(Devices.testSSR.get_state() == true){
             Devices.pump.stop();
-            Devices.testSSR.set(false);
+            // Devices.testSSR.set(false);
         }
 
         if(heating){
@@ -379,6 +423,12 @@ void Controller::clear_history(){
 
         positionVerin = Devices.verin.receive_CAN(controlParam::position);
         Serial.printf("DEBUG\t- verin_up_Action() - %d mm\n", positionVerin);
+
+        while(positionVerin == -1){
+            Devices.verin.wake_up();
+            positionVerin = Devices.verin.receive_CAN(controlParam::position);
+        }
+
         if(positionVerin > 0x03E8){
             vitesseVerin = 30.0f;
         }else{
@@ -391,25 +441,26 @@ void Controller::clear_history(){
     
     esp_err_t Controller::pre_infusion_action(){
         print_once("DEBUG\t- FILLING HEAD ACTION FIRST LOOP");
-        // Devices.lcd.display_text("PRE-INFUSION");
 
         if(first_loop){
             Devices.pump.PIDPompe.setOutputBounded(true);
-            Devices.pump.PIDPompe.setOutputBounds(-110.0, 110.0);
+            Devices.pump.PIDPompe.setOutputBounds(-100.0, 100.0);
             Devices.pump.PIDPompe.setMaxIntegralCumulation(40.0);
             Devices.pump.PIDPompe.setTarget(1.5);
             Devices.pump.PIDPompe.setCumulStartFactor(0.8);
 
             Devices.testSSR.set(true);
-            Devices.loadCell.calibrate(352.0);
+            Devices.loadCell.calibrate(605.0);
             Devices.loadCell.zero();
+
+            pre_infusion_load_over_5g = 0;
             Serial.println("END FIRST LOOP ACTIONS");
         }
 
         update_pressure();
         float pumpAdjust = Devices.pump.PIDPompe.tick(pressure);
 
-        Devices.pump.send_command((int) (110 + pumpAdjust));
+        Devices.pump.send_command((int) (100 + pumpAdjust));
         update_load();
         // load = Devices.loadCell.read(1);
 
@@ -426,22 +477,35 @@ void Controller::clear_history(){
             Devices.verin.PIDVerin.setMaxIntegralCumulation(30.0);
             Devices.verin.PIDVerin.setTarget(8.5);
             Devices.verin.PIDVerin.setCumulStartFactor(0.5);
+            Devices.verin.PIDVerin.setDerivativeBounded(true);
+            Devices.verin.PIDVerin.setMaxDerivative(30.0);
+            Devices.verin.wake_up();
+            delay(100);
+            Devices.pump.stop();
         }
+
+        update_load();
         update_pressure();
         float speedAdjust = Devices.verin.PIDVerin.tick(pressure);
 
         positionVerin = Devices.verin.receive_CAN(controlParam::position);
-        if(positionVerin != -1){
-            if(positionVerin < 0x00FA){
-                speedAdjust = 0.0;
-            }else if(Devices.pump.get_state() && positionVerin < 0x03F2){
-                Devices.pump.stop();
-            }
-        }
+        Serial.printf("DEBUG\t- verin_up_Action() - %d mm\n", positionVerin);
+
+        // while(positionVerin == -1){
+        //     Devices.verin.wake_up();
+        //     positionVerin = Devices.verin.receive_CAN(controlParam::position);
+        // }
+
+        // if(positionVerin != -1){
+        //     if(Devices.pump.get_state() && positionVerin < 960){
+        //         Devices.pump.stop();
+        //         Serial.println("DEBUG\t- Pump stopped");
+        //     }
+        // }
 
         if(speedAdjust == 0.0 && pressure > 9.5){
             verinOn = false;
-        }else{
+        }else if(!verinOn && pressure < 9.2){
             verinOn = true;
         }
 
@@ -453,6 +517,10 @@ void Controller::clear_history(){
     esp_err_t Controller::done_action(){
         print_once("DEBUG\t- DONE ACTION FIRST LOOP");
         // Devices.lcd.display_text("DONE");
+
+        if(Devices.loadCell.scale.wait_ready_timeout(1000)){
+            update_load();
+        }
 
         Devices.verin.send_CAN(20.0f, 80.0f);
 
@@ -503,21 +571,27 @@ void Controller::clear_history(){
     }
 
     bool Controller::pre_infusion_to_infusion(){
-        update_load();
-        return load > 5.0;
+        if(load > 5.0){
+            Serial.printf("INFO\t- pre_infusion_load_over_5g: %d\n", pre_infusion_load_over_5g++);
+        }
+        return pre_infusion_load_over_5g > 30;
     }
 
     bool Controller::infusion_to_enjoy(){
         if(positionVerin != -1)
             if(positionVerin <= 0x0001)
+            {
                 Devices.testSSR.set(false);
                 return true;
+            }
         return false;
     }
 
     bool Controller::enjoy_to_main_menu(){
-        if(positionVerin >= 0x00C3)
+        positionVerin = Devices.verin.receive_CAN(controlParam::position);
+        if(positionVerin >= 0x00C3){
             return true;
+        }
         return false;
     }
 

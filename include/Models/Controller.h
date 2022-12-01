@@ -32,12 +32,20 @@ class Controller final{
     STATES current_state = WAIT_CLIENT;
     STATES last_state = WAIT_CLIENT;
 
+    int loop_delay = 100;
+    int exec_counter = 0;
+    int exec_accum = 0;
+
+    int pre_infusion_load_over_5g = 0;
+
     char err_log[100];
     bool err_resolved = true;
 
     int positionVerin = -1;
     float vitesseVerin;
     bool verinOn = true;
+
+    std::chrono::_V2::system_clock::time_point last_exec = std::chrono::high_resolution_clock::now();
 
     //debug
     bool using_thermo = false;

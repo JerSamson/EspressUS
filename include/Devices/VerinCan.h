@@ -22,13 +22,14 @@ class VerinCan: public DeviceBase{
     const float i_verin = 0.006;
     const float d_verin = 0.06;
 
-    double get_ellapsed_ms_d(std::chrono::_V2::system_clock::time_point since){
+    public:
+
+    static double get_ellapsed_ms_d(std::chrono::_V2::system_clock::time_point since){
         double ell = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-since).count();
-        // Serial.printf("Get_ellapsed: %f\n", ell);
+        // Serial.printf("DEBUG\t- Get_ellapsed: %f\n", ell);
         return ell;
     }
 
-    public:
     virtual esp_err_t init();
     CAN_frame_t wake_frame;
     CAN_frame_t send_frame;

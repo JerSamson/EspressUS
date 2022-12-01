@@ -73,8 +73,8 @@ T PIDController<T>::tick(float currentFeedback)
     cycleDerivative = (error - lastError) / deltaTime;
 
     if(derivativeBounded){
-      if(cycleDerivative > maxDerivative) cycleDerivative = maxDerivative;
-      if(cycleDerivative < -maxDerivative) cycleDerivative = -maxDerivative;
+      if(cycleDerivative > maxDerivative) cycleDerivative = 0;
+      if(cycleDerivative < -maxDerivative) cycleDerivative = 0;
     }
   }else{
     firstPass = false;

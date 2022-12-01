@@ -16,7 +16,10 @@ esp_err_t Pump::send_command(int dutyCycle){
     }
 
     esp_err_t status{ESP_OK};
-    status |= dir_pin.set(false);  
+
+    if(dir_pin.state()){
+        status |= dir_pin.set(false);  
+    }
 
     if(dutyCycle != 0){
         pumpRunning = true;
